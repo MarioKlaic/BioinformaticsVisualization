@@ -74,4 +74,5 @@ docs/_build/
 target/
 
 # VS Code settings
+.vscode/
 
