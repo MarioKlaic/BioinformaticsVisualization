@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Needleman-Wunsch Global Alignment</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f9f9f9;
+            text-align: center;
+        }
+
+        .input-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 20px;
+        }
+
+        .input-group label {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            width: 300px;
+            text-align: center;
+        }
+
+        input[type="number"] {
+            width: 100px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .alignments-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .alignment-box {
+            padding: 10px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+
+        .alignment-box:hover {
+            background-color: #e0e0e0;
+        }
+
+        .alignment-box.selected {
+            border-color: #0056b3;
+            background-color: #d0e7ff;
+        }
+
+        .alignment-table-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+
+        .alignment-table {
+            border-collapse: collapse;
+            width: auto;
+            max-width: 90%;
+            margin: 0 auto;
+        }
+
+        .alignment-table th, .alignment-table td {
+            border: 1px solid #ddd;
+            padding: 0;
+            text-align: center;
+            font-size: 16px;
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .alignment-table td {
+            vertical-align: middle;
+        }
+
+        .alignment-table td.highlighted {
+            background-color: rgb(241, 132, 132) !important;
+            font-weight: bold;
+            color: black;
+        }
+
+        .alignment-table th {
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .arrow {
+            position: absolute;
+            width: 30%;
+            height: 30%;
+            margin: auto;
+        }
+
+        .left-arrow {
+            top: 35%;
+            left: 0px;
+        }
+
+        .up-arrow {
+            top: 0px;
+            left: 30%;
+        }
+
+        .diag-arrow {
+            top: 0px;
+            left: -1px;
+        }
+
+        .score-matrix-title {
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .alignment-table .header-cell {
+            background-color: #b0c4de;
+        }
+
+        .monospace {
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 0.1em;
+        }
+        .label {
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Needleman-Wunsch Global Alignment</h1>
+    <div class="input-container">
+        <div class="input-group">
+            <label for="match">Match</label>
+            <input type="number" id="match" name="match" value="1">
+        </div>
+        <div class="input-group">
+            <label for="mismatch">Mismatch</label>
+            <input type="number" id="mismatch" name="mismatch" value="-1">
+        </div>
+        <div class="input-group">
+            <label for="gap">Gap</label>
+            <input type="number" id="gap" name="gap" value="-1">
+        </div>
+    </div>
+    <div class="input-container">
+        <input type="text" id="seq1" name="seq1" placeholder="Enter Sequence 1" maxlength="15">
+        <input type="text" id="seq2" name="seq2" placeholder="Enter Sequence 2" maxlength="15">
+        <button onclick="alignSequences()">Align Sequences</button>
+    </div>
+    <div id="alignments" class="alignments-container"></div>
+    <div id="alignment" class="alignment-table-container"></div>
+    <script>
+        function alignSequences() {
+            var seq1 = document.getElementById('seq1').value;
+            var seq2 = document.getElementById('seq2').value;
+            var match = parseInt(document.getElementById('match').value, 10);
+            var mismatch = parseInt(document.getElementById('mismatch').value, 10);
+            var gap = parseInt(document.getElementById('gap').value, 10);
+            console.log(match, mismatch, gap)
+
+            var data = {
+                'seq1': seq1,
+                'seq2': seq2,
+                'match': match,
+                'mismatch': mismatch,
+                'gap': gap
+            };
+
+            fetch('/N-W', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayAlignments(data.all_alignments, data.optimal_paths, data.score, data.score_matrix, data.arrows);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function highlightCells(highlight_path) {
+            var tableCells = document.querySelectorAll('.alignment-table td');
+
+            // Loop through all table cells
+            for (var i = 0; i < tableCells.length; i++) {
+                var cell = tableCells[i];
+                // Remove any existing highlighting
+                cell.classList.remove('highlighted');
+                
+                // Get the cell's row and column index (adjusted for starting from 1)
+                var rowIndex = cell.parentNode.rowIndex - 1;
+                var colIndex = cell.cellIndex - 1;
+
+                // Check if the cell coordinates match any in the optimal path
+                for (var j = 0; j < highlight_path.length; j++) {
+                    var pathX = highlight_path[j][0];
+                    var pathY = highlight_path[j][1];
+                    if (pathX === rowIndex && pathY === colIndex) {
+                        // Highlight the cell
+                        cell.classList.add('highlighted');
+                        break; // Exit the loop once highlighted
+                    }
+                }
+            }
+        }
+
+        function displayAlignments(allAlignments, allPaths, score, scoreMatrix, arrows) {
+            var alignmentsContainer = document.getElementById('alignments');
+            var alignmentDiv = document.getElementById('alignment');
+            alignmentsContainer.innerHTML = '';
+            alignmentDiv.innerHTML = '<p>Score: ' + score + '</p>';
+
+            allAlignments.forEach((alignment, index) => {
+                var alignmentBox = document.createElement('div');
+                alignmentBox.className = 'alignment-box monospace';
+                alignmentBox.innerHTML = `
+                    <p class="label">Alignment 1: <span class="monospace">${alignment[0]}</span></p>
+                    <p class="label">Alignment 2: <span class="monospace">${alignment[1]}</span></p>
+                `;
+                alignmentBox.onclick = function() {
+                    document.querySelectorAll('.alignment-box').forEach(box => box.classList.remove('selected'));
+                    alignmentBox.classList.add('selected');
+                    displayMatrix(scoreMatrix, arrows, allPaths[index]);
+                };
+                alignmentsContainer.appendChild(alignmentBox);
+            });
+
+            // Display the first alignment by default
+            if (allAlignments.length > 0) {
+                displayMatrix(scoreMatrix, arrows, allPaths[0]);
+                document.querySelector('.alignment-box').classList.add('selected');
+            }
+        }
+        
+        function displayMatrix(scoreMatrix, arrows, optimalPath) {
+            var alignmentDiv = document.getElementById('alignment');
+            var seq1 = document.getElementById('seq1').value;
+            var seq2 = document.getElementById('seq2').value;
+            alignmentDiv.innerHTML = '<p class="score-matrix-title">Score Matrix:</p>';  // Clear the previous table content
+            var table = '<table class="alignment-table">';
+            
+            // Add sequence 2 to the top row
+            table += '<tr><td class="header-cell"></td><td class="header-cell"></td>'; // Empty cell for corner and sequence 1 header
+            for (var i = 0; i < seq2.length; i++) {
+                table += '<td class="header-cell">' + seq2[i] + '</td>';
+            }
+            table += '</tr>';
+
+            for (var i = 0; i < scoreMatrix.length; i++) {
+                table += '<tr>';
+                if (i != 0) {
+                    // Add sequence 1 to the leftmost column
+                    table += '<td class="header-cell">' + seq1[i - 1] + '</td>';
+                } else {
+                    table += '<td class="header-cell"></td>';
+                }
+                for (var j = 0; j < scoreMatrix[i].length; j++) {
+                    table += '<td>' + scoreMatrix[i][j];
+                    if (arrows[i][j].includes('left')) {
+                        table += '<img class="arrow left-arrow" src="/static/images/arrow_left.png" alt="left">';
+                    }
+                    if (arrows[i][j].includes('up')) {
+                        table += '<img class="arrow up-arrow" src="/static/images/arrow_upward.png" alt="up">';
+                    }
+                    if (arrows[i][j].includes('diag')) {
+                        table += '<img class="arrow diag-arrow" src="/static/images/arrow_diagonal.png" alt="diag">';
+                    }
+                    table += '</td>';
+                }
+                table += '</tr>';
+            }
+            table += '</table>';
+            alignmentDiv.innerHTML += table;
+
+            highlightCells(optimalPath);
+        }
+    </script>
+</body>
+{% endblock %}

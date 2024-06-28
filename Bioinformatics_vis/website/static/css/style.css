@@ -1,0 +1,286 @@
+/* style.css */
+body {
+    font-family: 'Arial', sans-serif;
+    padding: 20px;
+    background: #f9f9f9;
+}
+
+.tcontainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* Center the thumbnails horizontally */
+    align-items: flex-start; /* Align items to the top */
+    gap: 20px; /* Space between thumbnails */
+    padding: 20px;
+}
+
+.thumbnail {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center-align the content within each thumbnail */
+    width: 150px; /* Ensure thumbnail width matches image width */
+}
+
+.thumbnail img {
+    width: 150px;  /* Set the desired width */
+    height: 150px; /* Set the desired height */
+    object-fit: contain; /* Ensures that the entire image is visible */
+    border: #0056b3 2px solid;
+}
+
+.title {
+    font-size: 22px;
+    text-align: center;
+    max-width: 150px; /* Ensure title width matches image width */
+    word-wrap: break-word; /* Allow the title to wrap */
+    height: 50px; /* Set a fixed height for the title container */
+    line-height: 1.2em; /* Adjust line height for title text */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.content {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 20px;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+}
+
+.input-field {
+    width: 80%;
+    padding: 10px;
+    margin-top: 20px;
+    border: 2px solid #007bff;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+#textInputForm input[type="text"] {
+    width: 300px;
+    height: 30px;
+    padding: 8px;
+    font-size: 16px;
+    border: 2px solid #007bff;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.submit-btn {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.submit-btn:hover {
+    background-color: #0056b3;
+}
+
+.radio-buttons {
+    margin: 10px 0;
+}
+
+.radio-buttons input[type="radio"] {
+    margin-right: 5px;
+}
+
+.radio-buttons label {
+    margin-right: 15px;
+    font-size: 16px;
+}
+
+.error-message {
+    color: #ff0000; /* Red color for errors */
+    margin-top: 20px;
+}
+
+
+.submit-btn.disabled {
+    background-color: #cccccc; /* Gray color */
+    cursor: not-allowed;
+}
+
+/* Style for the BWT matrix table */
+.bwt-matrix table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.bwt-matrix th, .bwt-matrix td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+/* Style for highlighting cells */
+.highlight {
+    background-color: #ffcccc; /* A light red/pinkish color */
+}
+
+/* Style for the BWT column */
+.bwt-column {
+    background-color: #f2f2f2; /* A light gray background to highlight the BWT column */
+    font-weight: bold;
+}
+
+/* Style for navigation container */
+.step-navigation {
+    text-align: center; /* Center the navigation controls */
+    margin-top: 20px;
+    display: none;  /* Initially hidden, will be shown via JavaScript when the table is visible */
+}
+
+/* Style for navigation buttons */
+.step-navigation button {
+    padding: 10px 20px;
+    margin: 5px 10px;
+    border: none;
+    background-color: #007bff; /* Consistent with other buttons */
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px; /* Bigger text */
+    font-weight: bold;
+}
+
+.step-navigation button:disabled {
+    background-color: #cccccc; /* Gray color for disabled state */
+    cursor: not-allowed;
+}
+
+/* Style for the current step display */
+.current-step {
+    font-size: 20px;
+    color: #555;
+    margin: 0 15px;
+    display: inline-block;
+    min-width: 100px; /* Ensure it doesn't jump around when the number changes */
+    text-align: center;
+}
+
+
+
+/* New style for pink highlight used in Step 2 */
+.highlight-pink {
+    background-color: #ffccff; /* A light pink color */
+}
+
+/* New style for red highlight used in Step 2 */
+.highlight-red {
+    background-color: #bb1010; /* A light red color */
+}
+
+
+.step-1-highlight {
+    background-color: #ffdddd; /* A light red color */
+}
+
+.step-2-highlight {
+    background-color: #ddffdd; /* A light green color */
+}
+
+.step-2-highlight-pink {
+    background-color: #ffddee; /* A light pink color */
+}
+
+.step-2-highlight-red {
+    background-color: #ffccdd; /* A different shade of light red */
+}
+
+/* Style for the alignment table */
+.alignment-table {
+    margin-top: 20px; /* Add some space above the table */
+    display: flex;
+    flex-wrap: wrap;
+}
+
+
+/* Style for alignment table row */
+.alignment-row {
+    display: flex;
+}
+
+/* Style for alignment table cell */
+.alignment-cell {
+    border: 1px solid #ccc;
+    padding: 10px;
+    flex-grow: 1;
+    position: relative;
+}
+
+/* Style for the diagonal arrow */
+.arrow-diag,
+.arrow-up,
+.arrow-left {
+    position: absolute;
+    font-size: 12px;
+    color: #333;
+    display: none;
+}
+
+/* Style for the diagonal arrow pointing top left */
+.arrow-diag {
+    top: 0;
+    left: 0;
+}
+
+/* Style for the upward arrow */
+.arrow-up {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Style for the leftward arrow */
+.arrow-left {
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+/* Show arrows based on data */
+.alignment-cell:hover .arrow-diag,
+.alignment-cell:hover .arrow-up,
+.alignment-cell:hover .arrow-left {
+    display: block;
+}
+
+.home-button {
+    width: 150px;
+    height: 40x;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 24px;
+}
+.home-button:hover {
+    background-color: #0056b3;
+}
+
+
+
+/* Add more styles for additional steps as needed */
+
+
+
+

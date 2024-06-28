@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LCS Minimizer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f9f9f9;
+            text-align: center;
+        }
+
+        .input-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 20px;
+        }
+
+        .input-group label {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        button {
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            width: 300px;
+            text-align: center;
+            height: 40px; /* Set a fixed height for the input fields and the button */
+            box-sizing: border-box; /* Ensures padding is included in the height */
+        }
+
+        input[type="number"] {
+            width: 100px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            margin-top: 21px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .alignments-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .alignment-table {
+            margin-top: 50px;
+            border-collapse: collapse;
+            width: auto;
+            max-width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .alignment-table th, .alignment-table td {
+            border: 1px solid #ddd;
+            padding: 0;
+            text-align: center;
+            font-size: 16px;
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .alignment-table td {
+            vertical-align: middle;
+        }
+
+        .alignment-table td.highlighted {
+            background-color: rgb(241, 132, 132) !important;
+            font-weight: bold;
+            color: black;
+        }
+
+        .alignment-table th {
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .highlight {
+            background-color: #b0c4de;
+        }
+
+        .arrow {
+            position: absolute;
+            width: 30%;
+            height: 30%;
+            margin: auto;
+        }
+
+        .left-arrow {
+            top: 35%;
+            left: 0px;
+        }
+
+        .up-arrow {
+            top: 0px;
+            left: 30%;
+        }
+
+        .diag-arrow {
+            top: 0px;
+            left: -1px;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>LCS Minimizer</h1>
+    <div class="input-container">
+        <div class="input-group">
+            <label for="seq1">Sequence 1:</label>
+            <input type="text" id="seq1" name="seq1" maxlength="15" required>
+            <div id="seq1-error" class="error-message"></div>
+        </div>
+        <div class="input-group">
+            <label for="seq2">Sequence 2:</label>
+            <input type="text" id="seq2" name="seq2" maxlength="15" required>
+            <div id="seq2-error" class="error-message"></div>
+        </div>
+        <div class="input-group">
+            <label for="k">k:</label>
+            <input type="number" id="k" name="k" min="1" required>
+        </div>
+        <div class="input-group">
+            <label for="w">w:</label>
+            <input type="number" id="w" name="w" min="1" required>
+        </div>
+        <button id="submit" class="submit-btn">Submit</button>
+    </div>
+
+    <h2>Results</h2>
+    <div id="results" class="alignments-container">
+        <table id="lcs_table" class="alignment-table">
+        </table>
+    </div>
+
+    <script>
+        const validChars = new Set(['A', 'C', 'T', 'G']);
+
+        function validateSequence(inputId, errorId) {
+            const input = document.getElementById(inputId);
+            const errorDiv = document.getElementById(errorId);
+            const value = input.value.trim();
+            let isValid = true;
+
+            for (let char of value) {
+                if (!validChars.has(char.toUpperCase())) {
+                    isValid = false;
+                    break;
+                }
+            }
+
+            if (!isValid) {
+                errorDiv.textContent = 'Only characters A, C, T, G are allowed.';
+                return false;
+            } else {
+                errorDiv.textContent = '';
+                return true;
+            }
+        }
+
+        document.getElementById('seq1').addEventListener('input', function() {
+            validateSequence('seq1', 'seq1-error');
+        });
+
+        document.getElementById('seq2').addEventListener('input', function() {
+            validateSequence('seq2', 'seq2-error');
+        });
+
+        document.getElementById('submit').addEventListener('click', async function(e) {
+            e.preventDefault();
+
+            const seq1Valid = validateSequence('seq1', 'seq1-error');
+            const seq2Valid = validateSequence('seq2', 'seq2-error');
+
+            if (!seq1Valid || !seq2Valid) {
+                alert('Please correct the input sequences.');
+                return;
+            }
+
+            const seq1 = document.getElementById('seq1').value.trim();
+            const seq2 = document.getElementById('seq2').value.trim();
+            const k = document.getElementById('k').value;
+            const w = document.getElementById('w').value;
+
+            const response = await fetch('/LCS', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ seq1, seq2, k, w })
+            });
+
+            const data = await response.json();
+            const minimizers_one = data.minimizers_one;
+            const minimizers_two = data.minimizers_two;
+            const table = data.lcs_table;
+            const arrows = data.arrows;
+
+            let tableHtml = '<tr><th class="highlight"></th><th class="highlight"></th><th class="highlight">Minimizer</th>';
+            for (let j = 0; j < minimizers_one.length; j++) {
+                tableHtml += `<th class="highlight">${minimizers_one[j][0]}</th>`;
+            }
+            tableHtml += '</tr><tr><th class="highlight"></th><th class="highlight"></th><th class="highlight">Pos</th>';
+            for (let j = 0; j < minimizers_one.length; j++) {
+                tableHtml += `<th class="highlight">${minimizers_one[j][1]}</th>`;
+            }
+            tableHtml += '</tr>';
+
+            for (let i = 0; i < table.length; i++) {
+                if (i > 0) {
+                    tableHtml += `<tr><th class="highlight">${minimizers_two[i - 1][0]}</th>`;
+                    tableHtml += `<th class="highlight">${minimizers_two[i - 1][1]}</th>`;
+                } else {
+                    tableHtml += '<tr><th class="highlight">Minimizer</th><th class="highlight">Pos</th>';
+                }
+                for (let j = 0; j < table[i].length; j++) {
+                    tableHtml += `<td>${table[i][j]}`;
+                    if (arrows[i][j] === 'up') {
+                        tableHtml += '<img class="arrow up-arrow" src="/static/images/arrow_upward.png" alt="up">';
+                    } else if (arrows[i][j] === 'left') {
+                        tableHtml += '<img class="arrow left-arrow" src="/static/images/arrow_left.png" alt="left">';
+                    } else if (arrows[i][j] === 'diag') {
+                        tableHtml += '<img class="arrow diag-arrow" src="/static/images/arrow_diagonal.png" alt="diag">';
+                    }
+                    tableHtml += '</td>';
+                }
+                tableHtml += '</tr>';
+            }
+            document.getElementById('lcs_table').innerHTML = tableHtml;
+
+            highlightOptimalPath(table, arrows);
+            highlightMatchingMinimizers(minimizers_one, minimizers_two);
+        });
+
+        function highlightOptimalPath(table, arrows) {
+            const numRows = table.length;
+            const numCols = table[0].length;
+            let i = numRows - 1;
+            let j = numCols - 1;
+
+            while (i > 0 || j > 0) {
+                const cell = document.querySelector(`#lcs_table tr:nth-child(${i + 3}) td:nth-child(${j + 3})`);
+                if (cell) {
+                    cell.classList.add('highlighted');
+                }
+                if (arrows[i][j] === 'diag') {
+                    i--;
+                    j--;
+                } else if (arrows[i][j] === 'left') {
+                    j--;
+                } else if (arrows[i][j] === 'up') {
+                    i--;
+                } else {
+                    break;
+                }
+            }
+
+            // Highlight intermediate cells to the top-left
+            while (i >= 1) {
+                const cell = document.querySelector(`#lcs_table tr:nth-child(${i + 3}) td:nth-child(3)`);
+                if (cell) {
+                    cell.classList.add('highlighted');
+                }
+                i--;
+            }
+            while (j >= 1) {
+                const cell = document.querySelector(`#lcs_table tr:nth-child(3) td:nth-child(${j + 3})`);
+                if (cell) {
+                    cell.classList.add('highlighted');
+                }
+                j--;
+            }
+
+            // Highlight the top-left value cell if the path does not reach it
+            const topLeftCell = document.querySelector(`#lcs_table tr:nth-child(3) td:nth-child(3)`);
+            if (topLeftCell) {
+                topLeftCell.classList.add('highlighted');
+            }
+        }
+
+        function highlightMatchingMinimizers(minimizers_one, minimizers_two) {
+            const positions = [];
+            for (let i = 0; i < minimizers_two.length; i++) {
+                for (let j = 0; j < minimizers_one.length; j++) {
+                    if (arraysEqual(minimizers_two[i][0], minimizers_one[j][0])) {
+                        const cell = document.querySelector(`#lcs_table tr:nth-child(${i + 4}) td:nth-child(${j + 4})`);
+                        if (cell.classList.contains('highlighted')) {
+                            cell.classList.remove('highlighted');
+                            cell.style.backgroundColor = 'PaleGreen';
+                        }
+                        positions.push({ row: i + 3, col: j + 3 });
+                    }
+                }
+            }
+            return positions;
+        }
+
+        function arraysEqual(a, b) {
+            if (a === b) return true;
+            if (a == null || b == null) return false;
+            if (a.length !== b.length) return false;
+
+            for (let i = 0; i < a.length; ++i) {
+                if (a[i] !== b[i]) return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+{% endblock %}

@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Input Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+
+        #textInputForm {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #textInputForm label {
+            font-size: 18px; /* Increase label font size */
+            margin-bottom: 10px;
+        }
+
+        #textInputForm input[type="text"] {
+            width: 300px;
+            height: 30px;
+            padding: 8px;
+            font-size: 16px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        #textInputForm input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #textInputForm input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        table td {
+            border: 1px solid black;
+            padding: 10px;
+        }
+
+        .table-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: auto;
+        }
+
+        #stepButtons {
+            margin-top: 10px;
+        }
+
+        #stepButtons button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #stepButtons button:hover {
+            background-color: #0056b3;
+        }
+
+        #guideText {
+            margin-top: 10px;
+            width: 400px;
+            height: 200px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>SA-IS</h1>
+    <form id="textInputForm">
+        <label for="text">Enter your text:</label><br>
+        <input type="text" id="text" name="text" maxlength="15"><br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <div class="table-container" id="tableContainer">
+        <table id="resultTable"></table>
+        <div id="stepButtons">
+            <button id="previousBtn">Previous</button>
+            <button id="nextBtn">Next</button>
+        </div>
+    </div>
+
+    <textarea id="guideText" readonly></textarea>
+
+    <script>
+        const stepsDataEnum = ['guessSA', 'induceSortL', 'induceSortS', 'summariseSuffixArray', 'accurateLMSSort'];
+        const stepsDataTexts = {
+            'guessSA': "Initial guess of suffix array with LMS characters",
+            'induceSortL': 'Inducted L sort, going from left to right. ',
+            'induceSortS': 'Inducted S sort, going from right to left. ',
+            'summariseSuffixArray': 'For each LMS substring, we store its bucket position. If there are no two same values in the suffix array, we can find the answer. Otherwise, we need to go in recursively with the new suffix array.',
+            'accurateLMSSort': 'Recursively going outwards from the deepest SA_X found, connecting them to the previous SA_X-1 found until we reach the original SA.'
+        }
+        let stepsData = null;
+        let currentStep = 0;
+
+        document.getElementById('textInputForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var text = document.getElementById('text').value.trim();
+            if (text.length === 0) {
+                alert('Please enter some text.');
+                return;
+            }
+            fetchStepsData(text);
+            currentStep = 0;
+        });
+
+        function fetchStepsData(text) {
+            fetch('sais.py', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: text }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                stepsData = data.steps_table;
+                showResultTable(currentStep);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function showResultTable(step) {
+            var tableContainer = document.getElementById('tableContainer');
+            var resultTable = document.getElementById('resultTable');
+            var guideText = document.getElementById('guideText');
+            var text = document.getElementById('text').value.trim();
+            resultTable.innerHTML = ''; // Clear previous content
+            guideText.value = ''; // Clear previous guide text
+
+            // Get the current step data
+            var currentStepData = stepsData[step][0];
+            var lookaheadIndex = stepsData[step][1];
+            var previousStepData = step > 0 ? stepsData[step - 1][0] : null;
+            var currentStateComesFrom = stepsData[step][2];
+
+            // Create a row
+            var row = document.createElement('tr');
+
+            // Create cells and fill with values
+            for (var i = 0; i < currentStepData.length; i++) {
+                var cell = document.createElement('td');
+                cell.textContent = currentStepData[i];
+
+                if (previousStepData == null && currentStepData[i] != -1) {
+                    cell.style.backgroundColor = 'lightblue';
+                }
+                // Highlight cells where changes occur
+                if (previousStepData && previousStepData[i] !== currentStepData[i] && currentStepData[i] != -1) {
+                    cell.style.backgroundColor = 'lightblue'; // Change highlighting color to light blue
+                }
+
+                // Indicate cells with lookahead index (light orange)
+                if (lookaheadIndex !== null && lookaheadIndex === i) {
+                    cell.style.backgroundColor = 'lightcoral'; // Change highlighting color to light orange
+                }
+
+                row.appendChild(cell);
+            }
+
+            // Append the row to the table
+            resultTable.appendChild(row);
+
+            // Show the table container
+            tableContainer.style.display = 'flex';
+
+            // Display guide text
+            if (lookaheadIndex !== null) {
+                guideText.value = `Step ${step}: Lookahead index is at position ${lookaheadIndex}.`;
+            } else {
+                guideText.value = `Step ${step}: No lookahead index for this step.`;
+            }
+
+            console.log(currentStateComesFrom)
+            if (currentStateComesFrom == stepsDataEnum[0]) { //0 - guessSA
+                guideText.value += '\n\n' + stepsDataTexts[currentStateComesFrom];
+            } else if (currentStateComesFrom == stepsDataEnum[1]) { //1 - InduceSortL
+                guideText.value += '\n\n' + stepsDataTexts[currentStateComesFrom];
+                guideText.value += '\n\n' + "For each value > 0 at the lookahead index, we take the red cell number as value and look for S[value - 1]. If that character is L-type we add the (value-1) at the bucket start of the character and increase the bucket start by +1";
+            } else if (currentStateComesFrom == stepsDataEnum[2]) { //2 - InduceSortS
+                guideText.value += '\n\n' + stepsDataTexts[currentStateComesFrom];
+                guideText.value += '\n\n' + "Now we check if the character is S-type. If it is S-type we add the (value-1) at the bucket END of the character bucket and decrease the bucket end by -1";
+            } else if (currentStateComesFrom == stepsDataEnum[3]) { //3 - summariseSuffixArray
+                guideText.value += '\n\n' + stepsDataTexts[currentStateComesFrom];
+                guideText.value += '\n\n' + "If we need to go recursively, this algorithm adds the '$' sign to the new suffix array before continuing the algorithm, although it can be left out.";
+            } else if (currentStateComesFrom == stepsDataEnum[4]) { //4 - accurateLMSSort
+                guideText.value += '\n\n' + stepsDataTexts[currentStateComesFrom];
+            }
+
+            guideText.value += '\n\n' + currentStateComesFrom;
+        }
+
+        function nextStep() {
+            if (stepsData && currentStep < Object.keys(stepsData).length - 1) {
+                currentStep++;
+                showResultTable(currentStep);
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                showResultTable(currentStep);
+            }
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', nextStep);
+        document.getElementById('previousBtn').addEventListener('click', previousStep);
+    </script>
+</body>
+{% endblock %}

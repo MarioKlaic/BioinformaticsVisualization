@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Index</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+    <style> 
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 36px;
+            margin: 40px 0;
+        }
+
+    </style>
+</head>
+<body>
+     <h1>Bioinformatics algorithm visualization</h1>
+    <div class="tcontainer">
+        <div class="thumbnail">
+            <a href="/FM_index">
+                <p class="title">FM index</p>
+            </a>
+            <a href="/FM_index">
+                <img src="{{ url_for('static', filename='images/FM_INDEX.png') }}" alt="Page 1">
+            </a>
+        </div>
+        <div class="thumbnail">
+            <a href="/FM_index">
+                <p class="title">suffix tree</p>
+            </a>
+            <a href="/suffix_tree">
+                <img src="{{ url_for('static', filename='images/suffix_tree.png') }}" alt="Page 2">
+            </a>
+        </div>
+        <div class="thumbnail">
+            <a href="/FM_index">
+                <p class="title">SA-IS</p>
+            </a>
+            <a href="/SA-IS">
+                <img src="{{ url_for('static', filename='images/SAIS.png') }}" alt="Page 3">
+            </a>
+        </div>
+        <div class="thumbnail">
+            <a href="/FM_index">
+                <p class="title">Needleman-Wunsch GA</p>
+            </a>
+            <a href="/N-W">
+                <img src="{{ url_for('static', filename='images/NW.png') }}" alt="Page 4">
+            </a>
+        </div>
+        <div class="thumbnail">
+            <a href="/FM_index">
+                <p class="title">LCS</p>
+            </a>
+            <a href="/LCS">
+                <img src="{{ url_for('static', filename='images/LCS_index.png') }}" alt="Page 6">
+            </a>
+        </div>
+        <div class="thumbnail">
+            <a href="/FM_index">
+                <p class="title">LIS</p>
+            </a>
+            <a href="/LIS">
+                <img src="{{ url_for('static', filename='images/LIS_index.png') }}" alt="Page 7">
+            </a>
+        </div>
+    </div>
+</body>
+</html>

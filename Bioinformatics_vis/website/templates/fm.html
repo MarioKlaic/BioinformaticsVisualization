@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="content">
+    <h1>FM Index Pattern Search</h1>
+    <form action="" method="post" id="searchForm">
+        <input type="text" id="textInput" name="text" placeholder="Enter text here" class="input-field" value="{{ text }}" maxlength="15">
+        <input type="text" id="patternInput" name="pattern" placeholder="Enter pattern to search for" class="input-field" value="{{ pattern }}" maxlength="15">
+        <button type="submit" id="submitButton" class="submit-btn" disabled>Search</button>
+    </form>
+    {% if message %}
+    <p class="message">{{ message }}</p>
+    {% endif %}
+    {% if count is not none %}
+    <p class="count">Count: {{ count }}</p>
+    {% endif %}
+
+    {% if bwt_matrix %}
+    <div class="bwt-matrix">
+        <table>
+            <tr>
+                <!-- Header for Rotation, Position and BWT -->
+                <th>Rotation</th>
+                <th>Position</th>
+                <th>First</th>
+                <th>BWT</th>
+                <!-- Header for Rank Data -->
+                {% for key in rankAll.keys()|sort %}
+                <th>Rank {{ key }}</th>
+                {% endfor %}
+            </tr>
+            {% set row_num = [0] %}  <!-- Initialize a manual counter -->
+            {% set position_counter = {} %}
+            {% set tots_index = 0 %}
+            {% for row in bwt_matrix %}
+            {% set first_char = row[0] %}
+            {% if first_char not in position_counter %}
+                {% set position_counter = position_counter.update({first_char: 1}) or position_counter %}
+            {% else %}
+                {% set position_counter = position_counter.update({first_char: position_counter[first_char] + 1}) or position_counter %}
+            {% endif %}
+            <tr id="bwt-row-{{ row_num[-1] }}">  
+                <!-- Rotation Data (entire string) -->
+                <td>{{ row[:] }}</td>
+                <!-- Position Data -->
+                <td class="position-column">{{ position_counter[first_char] }}</td>
+                <!-- First and BWT Data -->
+                <td class="first-column">{{ first_char }}</td>
+                <td class="bwt-column">{{ row[-1] }}</td>
+                <!-- Rank Data -->
+                {% for key in rankAll.keys()|sort %}
+                <td class="rank-{{ key }}">{{ rankAll[key][row_num[-1]] }}</td>
+                {% endfor %}
+            </tr>
+            {% if row_num.append(row_num.pop() + 1) %}{% endif %}  <!-- Increment the counter -->
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Navigation controls for the step-by-step visualization -->
+<div class="step-navigation">
+    <button id="prevStep" onclick="prevStep()">← Prev</button>
+    <span class="current-step" id="currentStepDisplay">Step 0</span>
+    <button id="nextStep" onclick="nextStep()">Next →</button>
+</div>
+
+<script>
+    // Constants for the input fields, submit button, and step navigation controls
+    const textInput = document.getElementById('textInput');
+    const patternInput = document.getElementById('patternInput');
+    const submitButton = document.getElementById('submitButton');
+    const navControls = document.querySelector('.step-navigation'); // Reference to the navigation controls
+    const prevButton = document.getElementById('prevStep');
+    const nextButton = document.getElementById('nextStep');
+    
+    // Variables for tracking the current step and maximum number of steps
+    let currentStep = 0;
+    let last_step = 0;
+    var maxSteps = 100; // Placeholder for the maximum number of steps, adjust based on actual process
+    let next_step_lookahead = new Map();
+    let targetChar = ''
+    let string_done = []
+    let finished = false
+    let stepStates = {}; // Object to store step states
+    let stepLinks = { 0: {}}; // Object to store step links
+    stepLinks[0].next = 1;
+    function saveStepState(step, state) {
+        stepStates[step] = state;
+    }
+
+    function linkStepStates(step) {
+        if (stepStates[step - 1]) {
+            stepLinks[step] = { prev: step - 1 };
+            stepLinks[step - 1].next = step;
+        }
+    }
+    
+    
+    // Function to update the enable/disable state of the submit button based on input fields
+    function updateButtonState() {
+        if (textInput.value.trim() && patternInput.value.trim()) {
+            submitButton.disabled = false;  // Enable the button if both fields are not empty
+        } else {
+            submitButton.disabled = true;   // Disable the button if either field is empty
+        }
+    }
+    
+    function prevStep() {
+        if (currentStep > 0) {
+            last_step = currentStep;
+            if (stepLinks[currentStep] && stepLinks[currentStep].prev && stepStates[stepLinks[currentStep].prev]) {
+                restoreTableState(stepStates[stepLinks[currentStep].prev]);
+                currentStep--;
+                document.getElementById('currentStepDisplay').textContent = 'Step ' + currentStep;
+            } else {
+                currentStep--;
+                updateVisualization();
+            }
+            finished = false
+            updateStepButtonState();
+        }
+    }
+    function nextStep() {
+        if (currentStep < maxSteps) {
+            last_step = currentStep    
+            if (stepLinks[currentStep] && stepLinks[currentStep].next && stepStates[stepLinks[currentStep].next]) {
+                restoreTableState(stepStates[stepLinks[currentStep].next]);
+                currentStep++;
+                document.getElementById('currentStepDisplay').textContent = 'Step ' + currentStep;
+            } else {
+                currentStep++;
+                updateVisualization();
+            }
+            if(currentStep == maxSteps) {
+                    finished = true
+                }
+            updateStepButtonState();
+            console.log(stepLinks)
+        }
+    }
+    function updateStepButtonState() {
+        if (finished == true) {
+            nextButton.disabled = true
+            return   
+        }
+        else if (currentStep == 0) {
+            prevButton.disabled = true
+            return
+        }
+        prevButton.disabled = false
+        nextButton.disabled = false 
+        return
+    }
+
+    function clearHighlightsFromStep(step) {
+        const taggedCells = document.querySelectorAll(`[data-tag="step-${step}"]`);
+        taggedCells.forEach(cell => {
+            cell.classList.remove('highlight-pink', 'highlight-red'); 
+        });
+    }
+
+    function clearTagsFromStep(step) {}
+
+    // Function to tag and highlight cells for a specific step
+    function tagAndHighlightCells(cells, step, highlightClass, should_tag=true) {
+        cells.forEach(cell => {
+            cell.classList.add(highlightClass);
+            const last_tag = cell.dataset.tag
+            console.log(last_tag, "THIS ONCE")
+            cell.dataset.tag = `step-${step}`;
+        });
+    }
+    // Function to save the current table state
+    function saveTableState() {
+        const taggedCells = document.querySelectorAll('[data-tag]');
+        const highlightedCells = document.querySelectorAll('.highlight-pink, .highlight-red');
+        const tags = [];
+        const highlights = [];
+        taggedCells.forEach(cell => {
+            tags.push({
+                tag: cell.dataset.tag,
+                element: cell
+            })
+        });
+        highlightedCells.forEach(cell => {
+            highlights.push({
+                class: Array.from(cell.classList).find(c => c.startsWith('highlight')),
+                element: cell
+            })
+        });
+        return { tags, highlights };
+    }
+
+    // Function to restore a previously saved table state
+    function restoreTableState({ tags, highlights }) {
+        clearAllTags();
+        clearAllHighlights();
+        tags.forEach(tag => {
+            tag.element.dataset.tag = tag.tag;
+        });
+        highlights.forEach(highlight => {
+            highlight.element.classList.add(highlight.class);
+        });
+    }
+
+    function clearAllTags() {
+    const taggedCells = document.querySelectorAll('[data-tag]');
+    taggedCells.forEach(cell => {
+        cell.removeAttribute('data-tag');
+    });
+}
+
+function clearAllHighlights() {
+    const highlightedCells = document.querySelectorAll('.highlight-pink, .highlight-red');
+    highlightedCells.forEach(cell => {
+        cell.classList.remove('highlight-pink', 'highlight-red');
+    });
+}
+
+
+    function performStepLogic(step) {
+        // Example logic for Step 1
+        if (step === 0) {
+            finished = false
+            clearHighlightsFromStep(last_step)
+            const currentState = saveTableState();
+            saveStepState(step, currentState); // Save the state for the current step
+
+            // Link the states
+            linkStepStates(currentStep);
+            return
+        }
+        if (step === 1) {
+            finished = false
+            let pattern = '{{ pattern }}';
+            let firstColumnCells = document.querySelectorAll('.first-column');
+            let selectedCells = [];
+            targetChar = pattern[pattern.length - step]
+
+            // Loop through each cell in the "First" column
+            firstColumnCells.forEach((cell, index) => {
+                if (cell.textContent === targetChar) {
+                    selectedCells.push(cell); // Add this cell to the array of selected cells
+
+                    let correspondingBWTCell = document.querySelector(`#bwt-row-${index} .bwt-column`);
+                    if (correspondingBWTCell) {
+                        selectedCells.push(correspondingBWTCell); // Add the BWT cell to the array too
+                    }
+                }
+            });
+
+        tagAndHighlightCells(selectedCells, 1, 'highlight-pink');
+        string_done.push(targetChar)
+        const currentState = saveTableState();
+        saveStepState(step, currentState); // Save the state for the current step
+        linkStepStates(step);
+        
+        }
+        // Logic for Step 2 and subsequent even steps (2,4,6,...)
+        else if (step % 2 === 0) {
+            finished = false
+            let pattern = '{{ pattern }}';
+            let selectedCells = [];
+            if (pattern.length < string_done.length) {
+                console.log("Pattern too short for current step", pattern.length, string_done);
+                return; // If the pattern is shorter than the current step, there's nothing to do
+            }
+
+            
+            targetChar = pattern[pattern.length - string_done.length - 1 ];
+
+            let previousStepTag = `step-${step - 1}`; // The tag from the previous step
+            let firstColumnCells = document.querySelectorAll('.first-column');
+            let lastColumnCells = document.querySelectorAll('.bwt-column');
+            let rankArray = [];
+
+            // Loop through each cell in the "BWT" column
+            lastColumnCells.forEach((cell, index) => {
+                let firstCell = firstColumnCells[index];
+                if (cell.textContent === targetChar && firstCell.dataset.tag === previousStepTag) {
+                    selectedCells.push(cell); // Add the BWT cell to the selected list
+                    selectedCells.push(firstCell); // Also add the corresponding First cell
+
+                    // Find and add the corresponding rank cells for the same character
+                    let correspondingRankCells = document.querySelectorAll(`#bwt-row-${index} .rank-${targetChar}`);
+                    correspondingRankCells.forEach(rankCell => {
+                        selectedCells.push(rankCell);
+                        rankArray.push(rankCell.textContent);
+                    });
+                    next_step_lookahead.set(targetChar, rankArray);
+                }
+            });
+            // Now, use the tagAndHighlightCells function to highlight and tag the selected cells
+            tagAndHighlightCells(selectedCells, step, 'highlight-red');
+            clearHighlightsFromStep(last_step);
+            string_done.push(targetChar)
+            const currentState = saveTableState();
+            saveStepState(step, currentState); // Save the state for the current step
+            linkStepStates(step); // Link the current step state with the previous and next states
+        }
+        // Logic for subsequent odd steps (3,5,7,...) similar to Step 1 but with different calculations
+        /// Logic for these steps will have to change if you add new columns
+        else if (step % 2 !== 0) {
+            let pattern = '{{ pattern }}';
+            if (string_done.length >= pattern.length) {
+                maxSteps = step
+                finished = true
+            }
+            let selectedCells = [];
+            var position_cells = [];
+            let previousStepTag = `step-${step - 1}`; // The tag from the previous step
+
+            const allRows = document.querySelectorAll('table tr');
+            let targetCharArray = []
+            const rowsWithTargetValue = Array.from(allRows).filter(row => {
+                const firstCell = row.cells[2]; //this is the FIRST column
+                console.log(firstCell.textContent) // Get the first cell in the row
+                return firstCell && firstCell.textContent.trim() === targetChar
+            });
+
+            
+
+            next_step_lookahead.get(targetChar).forEach(rank => {
+                let row = document.getElementById(rowsWithTargetValue[rank-1].id);
+                selectedCells.push(row.cells[2]) //firsts
+                selectedCells.push(row.cells[3]) //BWT
+                position_cells.push(row.cells[1]) //positions
+            });
+            
+            // Select cells tagged in the previous step
+            let firstColumnCells = document.querySelectorAll('.first-column');
+            
+            // Now, use the tagAndHighlightCells function to highlight and tag the selected cells
+            clearHighlightsFromStep(last_step)
+            console.log(step, "THIS IS STEP")
+            tagAndHighlightCells(selectedCells, step, 'highlight-pink');
+            tagAndHighlightCells(position_cells, step, 'highlight-pink');
+
+            const currentState = saveTableState();
+            saveStepState(step, currentState); // Save the state for the current step
+            linkStepStates(step); // Link the current step state with the previous and next states
+        }
+    }
+
+    // Function to update the visualization based on the current step
+    function updateVisualization() {
+        // Update the display for the current step
+        document.getElementById('currentStepDisplay').textContent = 'Step ' + currentStep;
+        // Clear previous highlights
+        if(currentStep < last_step) {
+            clearHighlightsFromStep(last_step);
+            clearTagsFromStep(last_step)
+        } else {
+            clearHighlightsFromStep(currentStep-2);
+        }
+        
+        performStepLogic(currentStep);
+
+        // Show or hide navigation controls based on whether the table is visible
+        if (document.querySelector('.bwt-matrix')) { // Check if the BWT matrix table exists
+            navControls.style.display = 'block'; // Show the controls
+        } else {
+            navControls.style.display = 'none'; // Hide the controls
+        }
+    }
+    
+    // Event listeners for the input fields and initial setup
+    document.addEventListener('DOMContentLoaded', function() {
+        textInput.addEventListener('input', updateButtonState);
+        patternInput.addEventListener('input', updateButtonState);
+        updateButtonState(); // Set the initial state of the submit button
+        updateVisualization(); // Set up the initial visualization
+    });
+    </script>
+    
+{% endblock %}

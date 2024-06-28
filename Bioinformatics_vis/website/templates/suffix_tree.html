@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suffix Tree Visualization</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f9f9f9;
+            padding: 20px;
+        }
+        .input-container {
+            margin-bottom: 20px;
+        }
+        #textInput {
+            width: 300px;
+            height: 40px;
+            padding: 8px;
+            font-size: 16px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+        #buildBtn, #prevBtn, #nextBtn {
+            padding: 10px 20px;
+            margin: 5px 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #buildBtn:hover, #prevBtn:hover, #nextBtn:hover {
+            background-color: #0056b3;
+        }
+        #buildBtn:disabled, #prevBtn:disabled, #nextBtn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .visualization-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .tree-container {
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            padding: 10px;
+            overflow: auto;
+            overflow-y: visible;
+            display: flex;
+            flex-direction: column-reverse;
+            width: 70vw;
+            height: 70vh;
+        }
+        svg {
+            overflow: visible;
+        }
+        .node circle {
+            fill: #fff;
+            stroke: steelblue;
+            stroke-width: 2px;
+        }
+        .node text {
+            font: 12px sans-serif;
+            pointer-events: none;
+        }
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 1.5px;
+        }
+        .suffix-container {
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            padding: 10px;
+            width: 20vw;
+            height: 70vh;
+            overflow: auto;
+            margin-right: 20px;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+        .suffix-container ul {
+            padding-left: 0;
+            list-style-type: none;
+        }
+        .suffix-container li {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            font-size: 14px;
+            padding: 2px 0;
+        }
+        .suffix-container li span.number {
+            min-width: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Suffix Tree Visualization</h1>
+    <div class="input-container">
+        <input type="text" id="textInput" placeholder="Enter text..." maxlength="15">
+        <button id="buildBtn" onclick="setupSuffixTree()">Build Suffix Tree</button>
+    </div>
+    <div>
+        <button id="prevBtn" onclick="prevStep()" disabled>Previous</button>
+        <button id="nextBtn" onclick="nextStep()" disabled>Next</button>
+    </div>
+    <div class="visualization-container">
+        <div class="suffix-container">
+            <ul id="suffixList"></ul>
+        </div>
+        <div class="tree-container">
+            <svg id="treeSvg"></svg>
+            <svg id="treeSvg2" visibility="hidden"></svg>
+        </div>
+    </div>
+
+    <script>
+        let treeStates = [];
+        let suffixStates = [];
+        let currentStep = 0;
+        let maxSteps = 0;
+        let current_look = null;
+
+        function setupSuffixTree() {
+            document.getElementById('buildBtn').textContent = "Rebuild the tree";
+            treeStates = [];
+            suffixStates = [];
+            currentStep = 0;
+            maxSteps = 0;
+            let text = document.getElementById('textInput').value.trim() + "$";
+            maxSteps = text.length;
+            if (text === '') {
+                alert('Please enter some text!');
+                return;
+            }
+
+            fetch('/suffix_tree', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: text, step: currentStep })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    treeStates[currentStep] = data.tree_structure;
+                    suffixStates[currentStep] = data.suffixes;
+                    renderTree();
+                    renderSuffixList();
+                    document.getElementById('nextBtn').disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function renderTree() {
+            let svg2 = d3.select("#treeSvg2");
+            let svg = d3.select("#treeSvg");
+            svg.html("");
+            svg2.html("");
+        
+            const containerWidth = document.querySelector('.tree-container').clientWidth;
+            const containerHeight = document.querySelector('.tree-container').clientHeight;
+            const margin = { top: 20, right: 90, bottom: 30, left: 90 };
+
+            const treeLayout = d3.tree().nodeSize([50, 200]);
+
+            var root = d3.hierarchy(treeStates[currentStep], d => Object.values(d.children));
+
+            // while (root.descendants().length == root2.descendants().length);  U slučaju da želimo prikazati promijenu odmah na klik
+            
+            treeLayout(root);
+
+            const nodes = root.descendants();
+            const links = root.links();
+
+            const svgWidth = d3.max(nodes, d => d.y) + margin.left + margin.right;
+            const svgHeight = d3.max(nodes, d => d.x) + margin.top + margin.bottom;
+
+            svg.attr("width", svgWidth)
+                .attr("height", svgHeight)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            svg.selectAll(".link")
+                .data(links)
+                .enter().append("path")
+                .attr("class", "link")
+                .attr("d", d3.linkHorizontal()
+                    .x(d => d.y)
+                    .y(d => d.x));
+
+            const node = svg.selectAll(".node")
+                .data(nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.y},${d.x})`);
+
+            node.append("circle")
+                .attr("r", 4.5);
+
+            node.append("text")
+                .attr("dy", "0.31em")
+                .attr("x", d => d.children ? -10 : 10)
+                .attr("text-anchor", d => d.children ? "end" : "start")
+                .text(d => d.data.label ? d.data.label.split("(")[0] : "");
+
+            svg2.attr("width", svgWidth)
+                .attr("height", svgHeight)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            svg2.selectAll(".link")
+                .data(links)
+                .enter().append("path")
+                .attr("class", "link")
+                .attr("d", d3.linkHorizontal()
+                    .x(d => d.y)
+                    .y(d => d.x));
+
+            const node2 = svg2.selectAll(".node")
+                .data(nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.y},${d.x})`);
+
+            node2.append("circle")
+                .attr("r", 4.5);
+
+            node2.append("text")
+                .attr("dy", "0.31em")
+                .attr("x", d => d.children ? -10 : 10)
+                .attr("text-anchor", d => d.children ? "end" : "start")
+                .text(d => d.data.label ? d.data.label.split("(")[0] : "");
+
+            
+            function extractLinks(tree) {
+                let links = [];
+
+                function traverse(node, parentLabel) {
+                    if (node.link > 0) {
+                        let startNode = extractNodeNumber(node.label);
+                        let endNode = node.link;
+                        links.push({ start: startNode, end: endNode });
+                    }
+
+                    for (let childKey in node.children) {
+                        traverse(node.children[childKey], node.label);
+                    }
+                }
+
+                function extractNodeNumber(label) {
+                    let match = label.match(/Node: (\d+)/);
+                    return match ? parseInt(match[1]) : null;
+                }
+
+                traverse(tree.data, null);
+                return links;
+            }
+
+            function getCoordinates(links) {
+                let coordinates = [];
+
+                links.forEach(link => {
+                    const startNode = nodes.find(d => d.data.label && d.data.label.includes(`Node: ${link.start}`));
+                    const endNode = nodes.find(d => d.data.label && d.data.label.includes(`Node: ${link.end}`));
+
+                    if (startNode && endNode) {
+                        coordinates.push([
+                            { x: startNode.y , y: startNode.x },
+                            { x: endNode.y , y: endNode.x  }
+                        ]);
+                    }
+                });
+
+                return coordinates;
+            }
+
+            let tree_links = extractLinks(root);
+            let coordinates = getCoordinates(tree_links);
+
+            console.log(tree_links);
+            console.log(coordinates);
+
+            svg.selectAll(".suffix-link")
+                .data(coordinates)
+                .enter().append("line")
+                .attr("class", "suffix-link")
+                .attr("x1", d => d[0].x)
+                .attr("y1", d => d[0].y)
+                .attr("x2", d => d[1].x)
+                .attr("y2", d => d[1].y)
+                .attr("stroke", "red")
+                .attr("stroke-width", 1.5)
+                .attr("stroke-dasharray", "4,2")
+                .attr("marker-end", "url(#arrow)");
+
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 5)
+                .attr("refY", 5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto-start-reverse")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "red");
+
+            document.getElementById('prevBtn').disabled = currentStep === 0;
+            document.getElementById('nextBtn').disabled = currentStep === maxSteps;
+        }
+
+        function renderSuffixList() {
+            const suffixList = document.getElementById('suffixList');
+            suffixList.innerHTML = '';
+            const suffixes = suffixStates[currentStep]
+                .sort((a, b) => a.length - b.length);
+            const totalSuffixes = suffixes.length;
+            
+            suffixes.forEach((suffix, index) => {
+                const li = document.createElement('li');
+                const numberSpan = document.createElement('span');
+                numberSpan.classList.add('number');
+                numberSpan.textContent = `${totalSuffixes - index}`;
+                li.appendChild(numberSpan);
+                li.appendChild(document.createTextNode(suffix));
+                suffixList.appendChild(li);
+            });
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                renderTree();
+                renderSuffixList();
+            }
+        }
+
+        function nextStep() {
+            if (currentStep < maxSteps) {
+                currentStep++;
+                if (!treeStates[currentStep]) {
+                    fetch('/suffix_tree_next', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ step: currentStep })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            treeStates[currentStep] = data.tree_structure;
+                            suffixStates[currentStep] = data.suffixes;
+                            renderTree();
+                            renderSuffixList();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                } else {
+                    renderTree();
+                    renderSuffixList();
+                }
+            }
+        }
+    </script>
+</body>
+{% endblock %}
