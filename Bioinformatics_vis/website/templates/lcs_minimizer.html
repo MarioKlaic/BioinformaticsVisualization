@@ -13,14 +13,6 @@
             text-align: center;
         }
 
-        .input-container {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
         .input-group {
             display: flex;
             flex-direction: column;
@@ -162,6 +154,10 @@
             <input type="number" id="w" name="w" min="1" required>
         </div>
         <button id="submit" class="submit-btn">Submit</button>
+        <div class="toggle-container">
+            <input type="checkbox" id="toggleLimitText" name="toggleLimitText">
+            <span for="toggleLimitText" >Disable character limit</span>
+        </div>
     </div>
 
     <h2>Results</h2>
@@ -172,6 +168,33 @@
 
     <script>
         const validChars = new Set(['A', 'C', 'T', 'G']);
+
+        document.getElementById('toggleLimitText').addEventListener('change', function() {
+            const textInput = document.getElementById('textInput');
+            if (this.checked) {
+                textInput.removeAttribute('maxlength');
+            } else {
+                textInput.setAttribute('maxlength', '15');
+                if (textInput.value.length > 15) {
+                    textInput.value = textInput.value.substring(0, 15);
+                }
+            }
+
+            const patternInput = document.getElementById('patternInput');
+            if (this.checked) {
+                patternInput.removeAttribute('maxlength');
+
+            } else {
+                patternInput.setAttribute('maxlength', '15');
+                if (patternInput.value.length > 15) {
+                    patternInput.value = patternInput.value.substring(0, 15);
+                    if (textInput.value.length > 0) {
+                        patternInput.setAttribute('maxlength', textInput.value.length-1);
+                        patternInput.value = patternInput.value.substring(0, textInput.value.length-1);   
+                    }
+                }
+            }
+        });
 
         function validateSequence(inputId, errorId) {
             const input = document.getElementById(inputId);

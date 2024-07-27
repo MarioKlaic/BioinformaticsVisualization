@@ -52,8 +52,37 @@ body {
     text-align: center;
 }
 
+.toggle-container {
+    margin-top: 20px;
+}
+.toggle-container input[type="checkbox"] {
+    transform: scale(1.3);  /* Adjust scale to make the checkbox bigger */
+    margin-right: 10px;     /* Space between checkbox and label */
+}
+
+.toggle-container label {
+    font-size: 16px;  /* Adjust label font size */
+}
+
 h1 {
     color: #333;
+}
+
+
+.input-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.input-group {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 .input-field {
@@ -63,6 +92,7 @@ h1 {
     border: 2px solid #007bff;
     border-radius: 4px;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    flex-grow: 1;
 }
 #textInputForm input[type="text"] {
     width: 300px;

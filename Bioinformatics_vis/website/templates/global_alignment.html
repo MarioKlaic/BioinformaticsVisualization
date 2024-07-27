@@ -14,14 +14,6 @@
             text-align: center;
         }
 
-        .input-container {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
         .input-group {
             display: flex;
             flex-direction: column;
@@ -190,10 +182,37 @@
         <input type="text" id="seq1" name="seq1" placeholder="Enter Sequence 1" maxlength="15">
         <input type="text" id="seq2" name="seq2" placeholder="Enter Sequence 2" maxlength="15">
         <button onclick="alignSequences()">Align Sequences</button>
+        <div class="toggle-container">
+            <input type="checkbox" id="toggleLimitText" name="toggleLimitText">
+            <span for="toggleLimitText" >Disable character limit</span>
+        </div>
     </div>
     <div id="alignments" class="alignments-container"></div>
     <div id="alignment" class="alignment-table-container"></div>
     <script>
+
+        document.getElementById('toggleLimitText').addEventListener('change', function() {
+                const textInput = document.getElementById('seq1');
+                if (this.checked) {
+                    textInput.removeAttribute('maxlength');
+                } else {
+                    textInput.setAttribute('maxlength', '15');
+                    if (textInput.value.length > 15) {
+                        textInput.value = textInput.value.substring(0, 15);
+                    }
+                }
+
+                const secondTextInput = document.getElementById('seq2');
+                if (this.checked) {
+                    secondTextInput.removeAttribute('maxlength');
+
+                } else {
+                    secondTextInput.setAttribute('maxlength', '15');
+                    if (secondTextInput.value.length > 15) {
+                        secondTextInput.value = secondTextInput.value.substring(0, 15);
+                    }
+                }
+            });
         function alignSequences() {
             var seq1 = document.getElementById('seq1').value;
             var seq2 = document.getElementById('seq2').value;
