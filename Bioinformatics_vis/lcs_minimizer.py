@@ -1,5 +1,24 @@
+import string
 def convert_to_numeric(sequence):
-    mapping = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
+
+    start_index = 0
+
+    # Initialize the mapping dictionary
+    mapping = {}
+
+    # Map uppercase letters A-Z
+    for i, char in enumerate(string.ascii_uppercase, start=start_index):
+        mapping[char] = i
+
+    # Map lowercase letters a-z
+    for i, char in enumerate(string.ascii_lowercase, start=start_index + 26):
+        mapping[char] = i
+
+    # Map special characters
+    special_characters = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+
+    for i, char in enumerate(special_characters, start=start_index + 52):
+        mapping[char] = i
     return [mapping[char] for char in sequence]
 
 def find_minimizers(sequence, k, w):

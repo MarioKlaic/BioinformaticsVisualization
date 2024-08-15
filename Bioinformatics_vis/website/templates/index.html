@@ -16,60 +16,108 @@
             font-size: 36px;
             margin: 40px 0;
         }
-
     </style>
 </head>
 <body>
-     <h1>Bioinformatics algorithm visualization</h1>
+    <!-- Language Switch Buttons -->
+    <div class="dropdown">
+        <button class="dropbtn" id="languageIcon">🇬🇧</button>
+        <div class="dropdown-content">
+            <a href="#" onclick="changeLanguage('en')">🇬🇧 English</a>
+            <a href="#" onclick="changeLanguage('hr')">🇭🇷 Hrvatski</a>
+        </div>
+    </div>
+
+    <h1 data-i18n="index_title">Bioinformatics algorithm visualization</h1>
+
     <div class="tcontainer">
         <div class="thumbnail">
             <a href="/FM_index">
-                <p class="title">FM index</p>
+                <p class="title" data-i18n="fm_index">FM index</p>
             </a>
             <a href="/FM_index">
                 <img src="{{ url_for('static', filename='images/FM_INDEX.png') }}" alt="Page 1">
             </a>
         </div>
         <div class="thumbnail">
-            <a href="/FM_index">
-                <p class="title">suffix tree</p>
+            <a href="/suffix_tree">
+                <p class="title" data-i18n="suffix_tree">Suffix tree</p>
             </a>
             <a href="/suffix_tree">
                 <img src="{{ url_for('static', filename='images/suffix_tree.png') }}" alt="Page 2">
             </a>
         </div>
         <div class="thumbnail">
-            <a href="/FM_index">
-                <p class="title">SA-IS</p>
+            <a href="/SA-IS">
+                <p class="title" data-i18n="sais">SA-IS</p>
             </a>
             <a href="/SA-IS">
                 <img src="{{ url_for('static', filename='images/SAIS.png') }}" alt="Page 3">
             </a>
         </div>
         <div class="thumbnail">
-            <a href="/FM_index">
-                <p class="title">Needleman-Wunsch GA</p>
+            <a href="/N-W">
+                <p class="title" data-i18n="nw">Needleman-Wunsch GA</p>
             </a>
             <a href="/N-W">
                 <img src="{{ url_for('static', filename='images/NW.png') }}" alt="Page 4">
             </a>
         </div>
         <div class="thumbnail">
-            <a href="/FM_index">
-                <p class="title">LCS</p>
+            <a href="/LCS">
+                <p class="title" data-i18n="lcs">LCS</p>
             </a>
             <a href="/LCS">
                 <img src="{{ url_for('static', filename='images/LCS_index.png') }}" alt="Page 6">
             </a>
         </div>
         <div class="thumbnail">
-            <a href="/FM_index">
-                <p class="title">LIS</p>
+            <a href="/LIS">
+                <p class="title" data-i18n="lis">LIS</p>
             </a>
             <a href="/LIS">
                 <img src="{{ url_for('static', filename='images/LIS_index.png') }}" alt="Page 7">
             </a>
         </div>
+        <div class="thumbnail">
+            <a href="/minimizers">
+                <p class="title" data-i18n="minimizers">Minimizers</p>
+            </a>
+            <a href="/minimizers">
+                <img src="{{ url_for('static', filename='images/LIS_index.png') }}" alt="Page 8">
+            </a>
+        </div>
     </div>
+
+    <script>
+    function loadLanguage(language) {
+        if(language == 'en') {
+            document.getElementById('languageIcon').innerText = '🇬🇧';
+        } else if (language == 'hr'){
+            document.getElementById('languageIcon').innerText = '🇭🇷';
+        }
+        fetch(`/${language}.json`)
+            .then(response => response.json())
+            .then(data => {
+                document.querySelectorAll('[data-i18n]').forEach(element => {
+                    const key = element.getAttribute('data-i18n');
+                    if (data[key]) {
+                        element.innerText = data[key];
+                    }
+                });
+            });
+    }
+    
+    function changeLanguage(language) {
+        loadLanguage(language);
+    }
+    
+    // Optionally, load the default language on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedLanguage = localStorage.getItem('preferredLanguage') || 'en';
+        loadLanguage(savedLanguage);
+
+    });
+    </script>
 </body>
 </html>

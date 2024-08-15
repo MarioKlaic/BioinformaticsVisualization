@@ -1,22 +1,64 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+    body {
+        position: relative;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 80%;
+        margin: 50px auto;
+        position: relative; /* Position relative to draw arrows within the table */
+    }
+
+    td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: center;
+        position: relative; /* Position relative for absolutely positioned arrows */
+    }
+
+    .arrow {
+        position: absolute;
+        background: black;
+        transform-origin: 0 0; /* Anchor the transformation at the start of the arrow */
+        z-index: 10; /* Ensure the arrow is above other content */
+        height: 2px; /* Arrow thickness */
+    }
+
+    .arrow::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 10px solid black; /* Arrowhead color */
+            top: 5px; /* Adjust to position the arrowhead */
+            left: 100%; /* Position it at the end of the arrow */
+            transform: rotate(-90deg); /* Ensure the arrowhead is oriented correctly */
+            transform-origin: 0 0; /* Ensure rotation around its own origin */
+        }
+</style>
 <div class="content">
-    <h1>FM Index Pattern Search</h1>
+    <h1 data-i18n="fm_index_title">FM Index Pattern Search</h1>
     <form action="" method="post" id="searchForm">
-        <input type="text" id="textInput" name="text" placeholder="Enter text here" class="input-field" value="{{ text }}" maxlength="15">
-        <input type="text" id="patternInput" name="pattern" placeholder="Enter pattern to search for" class="input-field" value="{{ pattern }}" maxlength="15">
+        <input type="text" data-i18n="fm_textInput_placeholder" id="textInput" name="text" placeholder="Enter text here" class="input-field" value="{{ text }}" maxlength="15">
+        <input type="text" data-i18n="fm_patternInput_placeholder" id="patternInput" name="pattern" placeholder="Enter pattern to search for" class="input-field" value="{{ pattern }}" maxlength="15" style="display: none;">
+        <input type="hidden" id="languageInput", name="language">
         <div class="toggle-container">
             <input type="checkbox" id="toggleLimitText" name="toggleLimitText">
-            <span for="toggleLimitText" >Disable character limit</span>
+            <span for="toggleLimitText" data-i18n="fm_toggleLimitText" >Disable character limit</span>
         </div>
-        <button type="submit" id="submitButton" class="submit-btn" disabled>Search</button>
+        <button type="submit" data-i18n="fm_submitButton" id="submitButton" class="submit-btn" disabled>Search</button>
     </form>
     {% if message %}
-    <p class="message">{{ message }}</p>
+    <p id="fm_message"class="message">{{ message }}</p>
     {% endif %}
     {% if count is not none %}
-    <p class="count">Count: {{ count }}</p>
+    <!-- <p class="count" data-i18n="fm_count" id="count">Count: {{ count }}</p> -->
     {% endif %}
 
     {% if bwt_matrix %}
@@ -59,18 +101,21 @@
             {% if row_num.append(row_num.pop() + 1) %}{% endif %}  <!-- Increment the counter -->
             {% endfor %}
         </table>
+        <div id="arrows-container"></div>
     </div>
+    
     {% endif %}
 </div>
 
 <!-- Navigation controls for the step-by-step visualization -->
 <div class="step-navigation">
-    <button id="prevStep" onclick="prevStep()">← Prev</button>
-    <span class="current-step" id="currentStepDisplay">Step 0</span>
-    <button id="nextStep" onclick="nextStep()">Next →</button>
+    <button id="prevStep" data-i18n="fm_prevStep" onclick="prevStep()">← Prev</button>
+    <span class="current-step" data-i18n="fm_currentStepDisplay" id="currentStepDisplay">Step</span>
+    <button id="nextStep" data-i18n="fm_nextStep" onclick="nextStep()">Next →</button>
 </div>
 
 <script>
+
     // Constants for the input fields, submit button, and step navigation controls
     const textInput = document.getElementById('textInput');
     const patternInput = document.getElementById('patternInput');
@@ -78,6 +123,10 @@
     const navControls = document.querySelector('.step-navigation'); // Reference to the navigation controls
     const prevButton = document.getElementById('prevStep');
     const nextButton = document.getElementById('nextStep');
+    const currentStepDisplay = document.getElementById('currentStepDisplay');
+    const message = document.getElementById('fm_message');
+    let count_value = '{{ count }}';
+    let pattern = '{{ pattern }}';
     
     // Variables for tracking the current step and maximum number of steps
     let currentStep = 0;
@@ -89,6 +138,7 @@
     let finished = false
     let stepStates = {}; // Object to store step states
     let stepLinks = { 0: {}}; // Object to store step links
+    let arrow_states = {0: []};	// Object to store arrow states
     stepLinks[0].next = 1;
 
     document.getElementById('toggleLimitText').addEventListener('change', function() {
@@ -118,6 +168,27 @@
         }
     });
 
+    
+    function makelanguagechanges(language) {
+        console.log("THIS ISAOLONDSAO")
+        if (language == "en" && message != null) {
+            if( message.textContent.length > 0 && pattern.length > 0) {
+                message.textContent = "The pattern " + pattern + " occurs " + count_value + " time(s) in the text."
+            } else {
+                message.textContent = "Please provide a pattern to search for."
+            }
+        }
+            
+        else if (language == "hr" && message != null) {
+            if ( message.textContent.length > 0 && pattern.length > 0) {
+                message.textContent = "Uzorak " + pattern + " se pojavljuje " + count_value + " puta u zadanom nizu."
+            } else {
+                message.textContent = "Morate unijeti uzorak za pretragu."
+            }
+        }
+    }
+
+
     function saveStepState(step, state) {
         stepStates[step] = state;
     }
@@ -132,7 +203,7 @@
     
     // Function to update the enable/disable state of the submit button based on input fields
     function updateButtonState() {
-        if (textInput.value.trim() && patternInput.value.trim()) {
+        if (textInput.value.trim()) {
             submitButton.disabled = false;  // Enable the button if both fields are not empty
         } else {
             submitButton.disabled = true;   // Disable the button if either field is empty
@@ -141,11 +212,22 @@
     
     function prevStep() {
         if (currentStep > 0) {
+            clearAllArrows();
             last_step = currentStep;
             if (stepLinks[currentStep] && stepLinks[currentStep].prev && stepStates[stepLinks[currentStep].prev]) {
                 restoreTableState(stepStates[stepLinks[currentStep].prev]);
                 currentStep--;
-                document.getElementById('currentStepDisplay').textContent = 'Step ' + currentStep;
+                if (arrow_states[currentStep]) {
+                    redrawArrows(arrow_states[currentStep]);
+                }               
+                currentStep.toString().length
+                if(currentStepDisplay.textContent.length > 4 && languageInput.value == "en") {
+                    currentStepDisplay.textContent = currentStepDisplay.textContent.slice(0,0-currentStep.toString().length)
+                }
+                if(currentStepDisplay.textContent.length > 5 && languageInput.value == "hr") {
+                    currentStepDisplay.textContent = currentStepDisplay.textContent.slice(0,0-currentStep.toString().length)
+                }
+                currentStepDisplay.textContent += " " +currentStep;
             } else {
                 currentStep--;
                 updateVisualization();
@@ -156,11 +238,22 @@
     }
     function nextStep() {
         if (currentStep < maxSteps) {
+            clearAllArrows();
             last_step = currentStep    
             if (stepLinks[currentStep] && stepLinks[currentStep].next && stepStates[stepLinks[currentStep].next]) {
                 restoreTableState(stepStates[stepLinks[currentStep].next]);
                 currentStep++;
-                document.getElementById('currentStepDisplay').textContent = 'Step ' + currentStep;
+                if (arrow_states[currentStep]) {
+                    redrawArrows(arrow_states[currentStep]);
+                }          
+                currentStep.toString().length
+                if(currentStepDisplay.textContent.length > 4 && languageInput.value == "en") {
+                    currentStepDisplay.textContent = currentStepDisplay.textContent.slice(0,0-currentStep.toString().length)
+                }
+                if(currentStepDisplay.textContent.length > 5 && languageInput.value == "hr") {
+                    currentStepDisplay.textContent = currentStepDisplay.textContent.slice(0,0-currentStep.toString().length)
+                }
+                currentStepDisplay.textContent += " " + currentStep;
             } else {
                 currentStep++;
                 updateVisualization();
@@ -169,16 +262,19 @@
                     finished = true
                 }
             updateStepButtonState();
-            console.log(stepLinks)
         }
     }
     function updateStepButtonState() {
         if (finished == true) {
             nextButton.disabled = true
+            prevButton.disabled = false
             return   
         }
         else if (currentStep == 0) {
             prevButton.disabled = true
+            if (finished == false) {
+                nextButton.disabled = false
+            }
             return
         }
         prevButton.disabled = false
@@ -200,7 +296,6 @@
         cells.forEach(cell => {
             cell.classList.add(highlightClass);
             const last_tag = cell.dataset.tag
-            console.log(last_tag, "THIS ONCE")
             cell.dataset.tag = `step-${step}`;
         });
     }
@@ -237,6 +332,15 @@
         });
     }
 
+    function redrawArrows(arrow_state) {
+        if (arrow_state.length > 0) {
+            arrow_state.forEach(element => {
+                drawArrowBetweenCells(element.from, element.to); 
+            });
+            
+        }
+    }
+
     function clearAllTags() {
     const taggedCells = document.querySelectorAll('[data-tag]');
     taggedCells.forEach(cell => {
@@ -244,13 +348,53 @@
     });
 }
 
-function clearAllHighlights() {
-    const highlightedCells = document.querySelectorAll('.highlight-pink, .highlight-red');
-    highlightedCells.forEach(cell => {
-        cell.classList.remove('highlight-pink', 'highlight-red');
-    });
-}
+    function clearAllHighlights() {
+        const highlightedCells = document.querySelectorAll('.highlight-pink, .highlight-red');
+        highlightedCells.forEach(cell => {
+            cell.classList.remove('highlight-pink', 'highlight-red');
+        });
+    }
 
+    function clearAllArrows() {
+        const arrowsContainer = document.getElementById('arrows-container');
+        
+        // Remove all arrow elements from the container
+        while (arrowsContainer.firstChild) {
+            arrowsContainer.removeChild(arrowsContainer.firstChild);
+        }
+    }
+
+    function drawArrowBetweenCells(fromCell, toCell, step) {
+        if (arrow_states[step] === undefined) {
+            arrow_states[step] = [];
+        }
+        arrow_states[step].push({from: fromCell, to: toCell });
+        // Create a new div for the arrow
+        const arrow = document.createElement('div');
+        arrow.classList.add('arrow');
+
+        // Calculate positions
+        const fromRect = fromCell.getBoundingClientRect();
+        const toRect = toCell.getBoundingClientRect();
+
+        // Calculate center points
+        const startX = fromRect.left + fromRect.width / 2 + window.scrollX;
+        const startY = fromRect.top + fromRect.height / 2 + window.scrollY;
+        const endX = toRect.left + toRect.width / 7 + window.scrollX;
+        const endY = toRect.top + toRect.height / 2 + window.scrollY;
+
+        // Set arrow position and dimensions
+        const length = Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2);
+        const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+
+        arrow.style.width = `${length}px`;
+        arrow.style.transform = `rotate(${angle}deg)`;
+        arrow.style.left = `${startX}px`;
+        arrow.style.top = `${startY}px`;
+
+        // Append the arrow to the container
+        document.getElementById('arrows-container').appendChild(arrow);
+    }
 
     function performStepLogic(step) {
         // Example logic for Step 1
@@ -270,6 +414,9 @@ function clearAllHighlights() {
             let firstColumnCells = document.querySelectorAll('.first-column');
             let selectedCells = [];
             targetChar = pattern[pattern.length - step]
+            if (pattern.length === 1) {
+                maxSteps = step
+            }
 
             // Loop through each cell in the "First" column
             firstColumnCells.forEach((cell, index) => {
@@ -295,6 +442,7 @@ function clearAllHighlights() {
             finished = false
             let pattern = '{{ pattern }}';
             let selectedCells = [];
+            let selectedRankCells = [];
             if (pattern.length < string_done.length) {
                 console.log("Pattern too short for current step", pattern.length, string_done);
                 return; // If the pattern is shorter than the current step, there's nothing to do
@@ -318,14 +466,18 @@ function clearAllHighlights() {
                     // Find and add the corresponding rank cells for the same character
                     let correspondingRankCells = document.querySelectorAll(`#bwt-row-${index} .rank-${targetChar}`);
                     correspondingRankCells.forEach(rankCell => {
-                        selectedCells.push(rankCell);
+                        selectedRankCells.push(rankCell);
                         rankArray.push(rankCell.textContent);
+
+                        drawArrowBetweenCells(cell, rankCell, step);
+                        
                     });
                     next_step_lookahead.set(targetChar, rankArray);
                 }
             });
             // Now, use the tagAndHighlightCells function to highlight and tag the selected cells
-            tagAndHighlightCells(selectedCells, step, 'highlight-red');
+            tagAndHighlightCells(selectedCells, step, 'highlight-pink');
+            tagAndHighlightCells(selectedRankCells, step, 'highlight-red');
             clearHighlightsFromStep(last_step);
             string_done.push(targetChar)
             const currentState = saveTableState();
@@ -352,8 +504,6 @@ function clearAllHighlights() {
                 return firstCell && firstCell.textContent.trim() === targetChar
             });
 
-            
-
             next_step_lookahead.get(targetChar).forEach(rank => {
                 let row = document.getElementById(rowsWithTargetValue[rank-1].id);
                 selectedCells.push(row.cells[2]) //firsts
@@ -366,9 +516,8 @@ function clearAllHighlights() {
             
             // Now, use the tagAndHighlightCells function to highlight and tag the selected cells
             clearHighlightsFromStep(last_step)
-            console.log(step, "THIS IS STEP")
             tagAndHighlightCells(selectedCells, step, 'highlight-pink');
-            tagAndHighlightCells(position_cells, step, 'highlight-pink');
+            tagAndHighlightCells(position_cells, step, 'highlight-red');
 
             const currentState = saveTableState();
             saveStepState(step, currentState); // Save the state for the current step
@@ -379,7 +528,14 @@ function clearAllHighlights() {
     // Function to update the visualization based on the current step
     function updateVisualization() {
         // Update the display for the current step
-        document.getElementById('currentStepDisplay').textContent = 'Step ' + currentStep;
+        currentStep.toString().length
+        if(currentStepDisplay.textContent.length > 4 && languageInput.value == "en") {
+            currentStepDisplay.textContent = currentStepDisplay.textContent.slice(0,0-currentStep.toString().length)
+        }
+        if(currentStepDisplay.textContent.length > 5 && languageInput.value == "hr") {
+            currentStepDisplay.textContent = currentStepDisplay.textContent.slice(0,0-currentStep.toString().length)
+        }
+        currentStepDisplay.textContent += " " +currentStep;
         // Clear previous highlights
         if(currentStep < last_step) {
             clearHighlightsFromStep(last_step);
@@ -400,10 +556,30 @@ function clearAllHighlights() {
     
     // Event listeners for the input fields and initial setup
     document.addEventListener('DOMContentLoaded', function() {
+        const savedLanguage = localStorage.getItem('preferredLanguage') || 'en';
+        const languageInput = document.getElementById('languageInput');
+        languageInput.value = savedLanguage;
+        console.log(languageInput.value);
+        makelanguagechanges(savedLanguage);
+
+
         textInput.addEventListener('input', updateButtonState);
-        patternInput.addEventListener('input', updateButtonState);
+        if (document.querySelector('.bwt-matrix')){
+            patternInput.style.display = "inline-block"
+            patternInput.addEventListener('input', updateButtonState);
+        }
+        
         updateButtonState(); // Set the initial state of the submit button
-        updateVisualization(); // Set up the initial visualization
+        if (count_value == "-1" || count_value == "0") {
+            console.log("...")
+        } else {
+            updateVisualization(); // Set up the initial visualization
+        }
+    });
+
+    document.addEventListener('languageChanged', function() {
+        const savedLanguage = localStorage.getItem('preferredLanguage') || 'en';
+        makelanguagechanges(savedLanguage); 
     });
     </script>
     

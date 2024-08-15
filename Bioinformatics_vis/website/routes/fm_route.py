@@ -14,10 +14,23 @@ def page1():
     if request.method == 'POST':
         text = request.form.get('text')  # The original text
         pattern = request.form.get('pattern')  # The pattern to search for
-        if text and pattern:
+        language = request.form.get('language')  # The selected language
+        print("LANMGUAGE",text)
+        if text:
             fm_index = FM_INDEX(text)
-            count = fm_index.countMatches2(pattern)
-            message = f'The pattern "{pattern}" occurs {count} time(s) in the text.'
+            if pattern:
+                count = fm_index.countMatches2(pattern)
+                if (language == "en"):
+                    message = f'The pattern "{pattern}" occurs {count} time(s) in the text.'
+                elif (language == "hr"):
+                    message = f'Uzorak "{pattern}" se pojavljuje {count} puta u zadanom nizu.'
+            else:
+                count = -1;
+                if (language == "en"):
+                    message = "Please provide a pattern to search for."
+                elif (language == "hr"):
+                    message = "Morate unijeti uzorak za pretragu."
+
             bwt_matrix = fm_index.bwtMatrix()
             rankAll, tots = fm_index.rankAllBwt(fm_index.bw)
             print(bwt_matrix)

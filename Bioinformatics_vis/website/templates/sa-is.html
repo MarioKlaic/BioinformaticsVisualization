@@ -110,31 +110,59 @@
     </style>
 </head>
 <body>
-    <h1>SA-IS</h1>
+    <h1 data-i18n="sa_is_title">SA-IS</h1>
+
     <form id="textInputForm">
-        <label for="text">Enter your text:</label><br>
+        <label for="text" data-i18n="sa_is_enter_text">Enter your text:</label><br>
         <input type="text" id="text" name="text" maxlength="15"><br>
-        <input type="submit" value="Submit">
+        
+        <div class="toggle-container">
+            <input type="checkbox" id="toggleLimitText" name="toggleLimitText">
+            <span for="toggleLimitText" data-i18n="sa_is_disable_limit">Disable character limit</span>
+        </div>
+
+        <input type="submit" value="Submit" data-i18n="sa_is_submit">
     </form>
 
     <div class="table-container" id="tableContainer">
         <table id="resultTable"></table>
+        
         <div id="stepButtons">
-            <button id="previousBtn">Previous</button>
-            <button id="nextBtn">Next</button>
+            <button id="previousBtn" data-i18n="sa_is_previous">Previous</button>
+            <button id="nextBtn" data-i18n="sa_is_next">Next</button>
         </div>
     </div>
 
-    <textarea id="guideText" readonly></textarea>
+    <textarea id="guideText" readonly data-i18n="sa_is_guide_text"></textarea>
 
     <script>
+        document.getElementById('toggleLimitText').addEventListener('change', function() {
+            const textInput = document.getElementById('text');
+            if (this.checked) {
+                textInput.removeAttribute('maxlength');
+                secondTextInput.removeAttribute('maxlength');
+            } else {
+                textInput.setAttribute('maxlength', '15');
+                if (textInput.value.length > 15) {
+                    textInput.value = textInput.value.substring(0, 15);
+                }
+            }
+        });
         const stepsDataEnum = ['guessSA', 'induceSortL', 'induceSortS', 'summariseSuffixArray', 'accurateLMSSort'];
-        const stepsDataTexts = {
+        const stepsDataTextsEn = {
             'guessSA': "Initial guess of suffix array with LMS characters",
             'induceSortL': 'Inducted L sort, going from left to right. ',
             'induceSortS': 'Inducted S sort, going from right to left. ',
             'summariseSuffixArray': 'For each LMS substring, we store its bucket position. If there are no two same values in the suffix array, we can find the answer. Otherwise, we need to go in recursively with the new suffix array.',
             'accurateLMSSort': 'Recursively going outwards from the deepest SA_X found, connecting them to the previous SA_X-1 found until we reach the original SA.'
+        }
+
+        const stepsDataTextsHr = {
+            'guessSA': "Početna pretpostavka za sufiksni niz s LMS znakovima",
+            'induceSortL': 'Inducirano L sortiranje, od lijeva prema desno.',
+            'induceSortS': 'Inducirano S sortiranje, od desna prema lijevo.',
+            'summariseSuffixArray': 'Za svaku LMS podniz, pohranjujemo njegovu poziciju u košu. Ako nema dva ista elementa u sufiksnom nizu, možemo pronaći odgovor. Inače, moramo rekurzivno nastaviti s novim sufiksnim nizom.',
+            'accurateLMSSort': 'Rekurzivno izlazimo iz najdubljeg SA_X pronađenog, povezujući ih s prethodnim SA_X-1 dok ne dođemo do izvornog SA.'
         }
         let stepsData = null;
         let currentStep = 0;
@@ -167,6 +195,7 @@
         }
 
         function showResultTable(step) {
+            const lang = localStorage.getItem('preferredLanguage') || 'en';
             var tableContainer = document.getElementById('tableContainer');
             var resultTable = document.getElementById('resultTable');
             var guideText = document.getElementById('guideText');
@@ -212,27 +241,56 @@
 
             // Display guide text
             if (lookaheadIndex !== null) {
-                guideText.value = `Step ${step}: Lookahead index is at position ${lookaheadIndex}.`;
+                if (lang == 'en') {
+                    guideText.value = `Step ${step}: Lookahead index is at position ${lookaheadIndex}.`;
+                }
+                else if(lang == 'hr') {
+                    guideText.value = `Korak ${step}: Pogodak je na poziciji ${lookaheadIndex}.`;
+                    
+                }
+
             } else {
-                guideText.value = `Step ${step}: No lookahead index for this step.`;
+                if (lang == 'en') {
+                    guideText.value = `Step ${step}: No lookahead index for this step.`;
+                }
+                else if(lang == 'hr') {
+                    guideText.value = `Korak ${step}: Nema pogodaka za ovaj korak.`;
+                }
             }
 
             console.log(currentStateComesFrom)
-            if (currentStateComesFrom == stepsDataEnum[0]) { //0 - guessSA
-                guideText.value += '\n\n' + stepsDataTexts[currentStateComesFrom];
-            } else if (currentStateComesFrom == stepsDataEnum[1]) { //1 - InduceSortL
-                guideText.value += '\n\n' + stepsDataTexts[currentStateComesFrom];
-                guideText.value += '\n\n' + "For each value > 0 at the lookahead index, we take the red cell number as value and look for S[value - 1]. If that character is L-type we add the (value-1) at the bucket start of the character and increase the bucket start by +1";
-            } else if (currentStateComesFrom == stepsDataEnum[2]) { //2 - InduceSortS
-                guideText.value += '\n\n' + stepsDataTexts[currentStateComesFrom];
-                guideText.value += '\n\n' + "Now we check if the character is S-type. If it is S-type we add the (value-1) at the bucket END of the character bucket and decrease the bucket end by -1";
-            } else if (currentStateComesFrom == stepsDataEnum[3]) { //3 - summariseSuffixArray
-                guideText.value += '\n\n' + stepsDataTexts[currentStateComesFrom];
-                guideText.value += '\n\n' + "If we need to go recursively, this algorithm adds the '$' sign to the new suffix array before continuing the algorithm, although it can be left out.";
-            } else if (currentStateComesFrom == stepsDataEnum[4]) { //4 - accurateLMSSort
-                guideText.value += '\n\n' + stepsDataTexts[currentStateComesFrom];
+            if (lang == 'en') {
+                if (currentStateComesFrom == stepsDataEnum[0]) { //0 - guessSA
+                    guideText.value += '\n\n' + stepsDataTextsEn[currentStateComesFrom];
+                } else if (currentStateComesFrom == stepsDataEnum[1]) { //1 - InduceSortL
+                    guideText.value += '\n\n' + stepsDataTextsEn[currentStateComesFrom];
+                    guideText.value += '\n\n' + "For each value > 0 at the lookahead index, we take the red cell number as value and look for S[value - 1]. If that character is L-type we add the (value-1) at the bucket start of the character and increase the bucket start by +1";
+                } else if (currentStateComesFrom == stepsDataEnum[2]) { //2 - InduceSortS
+                    guideText.value += '\n\n' + stepsDataTextsEn[currentStateComesFrom];
+                    guideText.value += '\n\n' + "Now we check if the character is S-type. If it is S-type we add the (value-1) at the bucket END of the character bucket and decrease the bucket end by -1";
+                } else if (currentStateComesFrom == stepsDataEnum[3]) { //3 - summariseSuffixArray
+                    guideText.value += '\n\n' + stepsDataTextsEn[currentStateComesFrom];
+                    guideText.value += '\n\n' + "If we need to go recursively, this algorithm adds the '$' sign to the new suffix array before continuing the algorithm, although it can be left out.";
+                } else if (currentStateComesFrom == stepsDataEnum[4]) { //4 - accurateLMSSort
+                    guideText.value += '\n\n' + stepsDataTextsEn[currentStateComesFrom];
+                }                
+            } else if (lang == 'hr') {
+                if (currentStateComesFrom == stepsDataEnum[0]) { //0 - guessSA
+                    guideText.value += '\n\n' + stepsDataTextsHr[currentStateComesFrom];
+                } else if (currentStateComesFrom == stepsDataEnum[1]) { //1 - InduceSortL
+                    guideText.value += '\n\n' + stepsDataTextsHr[currentStateComesFrom];
+                    guideText.value += '\n\n' +  "Za svaku vrijednost > 0 na indeksu unaprijed, uzimamo broj crvene ćelije kao vrijednost i tražimo S[vrijednost - 1]. Ako je taj znak L-tip, dodajemo (vrijednost-1) na početak spremnika znaka i povećavamo početak spremnika za +1.";
+                } else if (currentStateComesFrom == stepsDataEnum[2]) { //2 - InduceSortS
+                    guideText.value += '\n\n' + stepsDataTextsHr[currentStateComesFrom];
+                    guideText.value += '\n\n' + "Sada provjeravamo je li znak S-tip. Ako je S-tip, dodajemo (vrijednost-1) na KRAJ spremnika znaka i smanjujemo kraj spremnika za -1.";
+                } else if (currentStateComesFrom == stepsDataEnum[3]) { //3 - summariseSuffixArray
+                    guideText.value += '\n\n' + stepsDataTextsHr[currentStateComesFrom];
+                    guideText.value += '\n\n' +  "Ako trebamo ići rekurzivno, ovaj algoritam dodaje znak '$' novom nizu sufiksa prije nego što nastavi s algoritmom, iako se može izostaviti.";
+                } else if (currentStateComesFrom == stepsDataEnum[4]) { //4 - accurateLMSSort
+                    guideText.value += '\n\n' + stepsDataTextsHr[currentStateComesFrom];
+                }
             }
-
+            
             guideText.value += '\n\n' + currentStateComesFrom;
         }
 

@@ -6,8 +6,67 @@
 
 </head>
 <body>
-    <button class="home-button" onclick="location.href='/'">Home</button>
+    <button class="home-button" data-i18n="home_button" onclick="location.href='/'">Home</button>
+    <div class="dropdown">
+        <button class="dropbtn" id="languageIcon">🇬🇧</button>
+        <div class="dropdown-content">
+            <a href="#" onclick="changeLanguage('en')">🇬🇧 English</a>
+            <a href="#" onclick="changeLanguage('hr')">🇭🇷 Hrvatski</a>
+        </div>
+    </div>
     {% block content %}
     {% endblock %}
 </body>
+<script>
+    function loadLanguage(language) {
+        localStorage.setItem('preferredLanguage', language); // Save the selected language to localStorage
+        if(language == 'en') {
+            document.getElementById('languageIcon').innerText = '🇬🇧';
+        } else if (language == 'hr'){
+            document.getElementById('languageIcon').innerText = '🇭🇷';
+        }
+
+        fetch(`/${language}.json`)
+            .then(response => response.json())
+            .then(data => {
+                var mynumber = -1
+                if(document.getElementById('currentStepDisplay')){
+                    const currentStepDisplay = document.getElementById('currentStepDisplay');      
+                    mynumber = currentStepDisplay.textContent.slice(5)
+                }
+                document.querySelectorAll('[data-i18n]').forEach(element => {
+                    const key = element.getAttribute('data-i18n');
+
+                    if (data[key]) {
+                        // Check if it's an input, textarea, or select element
+                        if (element.tagName.trim() == 'INPUT' || element.tagName.trim() == 'TEXTAREA' || element.tagName.trim() === 'SELECT') {
+                            if (element.type === 'submit' || element.type === 'button') {
+                                element.value = data[key]; // For buttons
+                            } else {
+                                element.placeholder = data[key]; // For text inputs, textareas, etc.
+                            }
+                        } else {
+                            element.innerText = data[key]; // Default to innerText for other elements
+                        }
+                    }
+                });
+                if(mynumber != -1){
+                    document.getElementById('currentStepDisplay').textContent += " " + mynumber
+                }
+            });
+
+    }
+
+    function changeLanguage(language) {
+        loadLanguage(language);
+        document.dispatchEvent(new Event('languageChanged'));
+    }
+
+    // Optionally, load the default language on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedLanguage = localStorage.getItem('preferredLanguage') || 'en';
+        loadLanguage(savedLanguage);
+    });
+
+</script>
 </html>

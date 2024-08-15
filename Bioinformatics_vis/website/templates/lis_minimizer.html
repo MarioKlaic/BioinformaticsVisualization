@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIS Minimizer Visualization</title>
+    <title data-i18n="lis_title">LIS Minimizer Visualization</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -89,35 +89,59 @@
     </style>
 </head>
 <body>
-    <h1>LIS Minimizer Visualization</h1>
+    <h1 data-i18n="lis_title">LIS Minimizer Visualization</h1>
     <div class="input-container">
         <div class="input-group">
-            <label for="seq1">Sequence 1:</label>
+            <label for="seq1" data-i18n="lis_seq1_label">Sequence 1:</label>
             <input type="text" id="seq1" name="seq1" maxlength="25" required>
         </div>
         <div class="input-group">
-            <label for="seq2">Sequence 2:</label>
+            <label for="seq2" data-i18n="lis_seq2_label">Sequence 2:</label>
             <input type="text" id="seq2" name="seq2" maxlength="25" required>
         </div>
         <div class="input-group">
-            <label for="k">k:</label>
+            <label for="k" data-i18n="lis_k_label">k:</label>
             <input type="number" id="k" name="k" min="1" required>
         </div>
         <div class="input-group">
-            <label for="w">w:</label>
+            <label for="w" data-i18n="lis_w_label">w:</label>
             <input type="number" id="w" name="w" min="1" required>
         </div>
-        <button id="submit">Submit</button>
+    </div>
+    <div class="toggle-container">
+        <button id="submit" data-i18n="lis_submit">Submit</button>
+        <input type="checkbox" id="toggleLimitText" name="toggleLimitText">
+        <span for="toggleLimitText" data-i18n="lis_toggle_limit">Disable character limit</span>
     </div>
 
     <div class="navigation-buttons">
-        <button id="prev" disabled>Previous</button>
-        <button id="next" disabled>Next</button>
+        <button id="prev" disabled data-i18n="lis_prev">Previous</button>
+        <button id="next" disabled data-i18n="lis_next">Next</button>
     </div>
 
     <div class="results" id="results"></div>
 
     <script>
+
+        document.getElementById('toggleLimitText').addEventListener('change', function() {
+            const textInput = document.getElementById('seq1');
+            const secondTextInput = document.getElementById('seq2');
+            if (this.checked) {
+                textInput.removeAttribute('maxlength');
+                secondTextInput.removeAttribute('maxlength');
+            } else {
+                textInput.setAttribute('maxlength', '25');
+                secondTextInput.setAttribute('maxlength', '25');
+
+                if (textInput.value.length > 25) {
+                    textInput.value = textInput.value.substring(0, 25);
+                }
+
+                if (secondTextInput.value.length > 25) {
+                    secondTextInput.value = secondTextInput.value.substring(0, 25);
+                }
+            }
+        });
         let currentStep = 0;
         let minimizersOne = [];
         let minimizersTwo = [];
@@ -173,8 +197,17 @@
             document.getElementById('next').disabled = step === 4;
 
             if (step === 1) {
-                let tableHtml = '<h2>Minimizers for Sequence 1 and Sequence 2</h2>';
-                tableHtml += '<table><tr><th>Sequence 1 Minimizers</th><th>Sequence 2 Minimizers</th></tr>';
+                const lang = localStorage.getItem('preferredLanguage') || 'en';
+                console.log("language: 1" + lang);
+                let tableHtml;
+                if (lang == 'en') {
+                    tableHtml = `<h2 data-i18n="lis_min_seq">Minimizers for Sequence 1 and Sequence 2</h2>`;
+                    tableHtml += '<table><tr><th data-i18n="lis_seq1_min">Sequence 1 Minimizers</th><th data-i18n="lis_seq2_min">Sequence 2 Minimizers</th></tr>';
+                } else if (lang == 'hr') {
+                    tableHtml = `<h2 data-i18n="lis_min_seq">Minimizatori za Sekvencu 1 i Sekvencu 2</h2>`;
+                    tableHtml += '<table><tr><th data-i18n="lis_seq1_min">Minimizatori sekvence 1</th><th data-i18n="lis_seq2_min">Minimizatori sekvence 2</th></tr>';
+                }
+
                 for (let i = 0; i < Math.max(minimizersOne.length, minimizersTwo.length); i++) {
                     tableHtml += '<tr>';
                     if (i < minimizersOne.length) {
@@ -194,20 +227,43 @@
                 tableHtml += '</table>';
                 resultsDiv.innerHTML = tableHtml;
             } else if (step === 2) {
-                let tableHtml = '<h2>Matches</h2>';
-                tableHtml += '<table><tr><th>Minimizer</th><th>Position1</th><th>Position2</th></tr>';
+                const lang = localStorage.getItem('preferredLanguage') || 'en';
+                console.log("language: 2" + lang);
+                let tableHtml;
+                if (lang == 'en') {
+                    tableHtml = `<h2 data-i18n="lis_matches">Matches</h2>`;
+                    tableHtml += '<table><tr><th data-i18n="lis_minimizer">Minimizer</th><th data-i18n="lis_pos1">Position1</th><th data-i18n="lis_pos2">Position2</th></tr>';
+                } else if (lang == 'hr') {
+                    tableHtml = `<h2 data-i18n="lis_matches">Podudaranja</h2>`;
+                    tableHtml += '<table><tr><th data-i18n="lis_minimizer">Minimizator</th><th data-i18n="lis_pos1">Pozicija 1</th><th data-i18n="lis_pos2">Pozicija 2</th></tr>';
+                }
+
                 matches.forEach(match => {
                     const position2Highlight = 'highlight';
                     tableHtml += `<tr><td>${match[0]}</td><td>${match[1]}</td><td class="${position2Highlight}">${match[2]}</td></tr>`;
                 });
-                // Add the invisible row with the label "Sequence for LIS"
-                tableHtml += '<tr><td colspan="2"></td><td>Sequence for LIS</td></tr>';
+                
+                if (lang == 'en') {
+                    tableHtml += '<tr><td colspan="2"></td><td data-i18n="lis_seq_lis">Sequence for LIS</td></tr>';
+                } else if (lang == 'hr') {
+                    tableHtml += '<tr><td colspan="2"></td><td data-i18n="lis_seq_lis">Sekvenca za LIS</td></tr>';
+                }
+                
                 tableHtml += '</table>';
                 resultsDiv.innerHTML = tableHtml;
             } else if (step === 3) {
-                let tableHtml = '<h2>LIS Steps</h2>';
-                tableHtml += '<p>Piles indicate the last number placed on top of the pile, index -1 means it has no predecessor</p>';
-                tableHtml += '<table><tr><th>Step</th><th>Number</th><th>Piles</th><th>Positions</th><th>Predecessors</th></tr>';
+                const lang = localStorage.getItem('preferredLanguage') || 'en';
+                console.log("language: 3" + lang);
+                let tableHtml;
+                if (lang == 'en') {
+                    tableHtml = `<h2 data-i18n="lis_lis_steps">LIS Steps</h2>`;
+                    tableHtml += `<p data-i18n="lis_piles_info">Piles indicate the last number placed on top of the pile, index -1 means it has no predecessor</p>`;
+                    tableHtml += '<table><tr><th data-i18n="lis_step">Step</th><th data-i18n="lis_number">Number</th><th data-i18n="lis_piles">Piles</th><th data-i18n="lis_positions">Positions</th><th data-i18n="lis_predecessors">Predecessors</th></tr>';
+                } else if (lang == 'hr') {
+                    tableHtml = `<h2 data-i18n="lis_lis_steps">Koraci za LIS</h2>`;
+                    tableHtml += `<p data-i18n="lis_piles_info">Hrpe pokazuju posljednji broj postavljen na vrh hrpe, indeks -1 znači da nema prethodnika</p>`;
+                    tableHtml += '<table><tr><th data-i18n="lis_step">Korak</th><th data-i18n="lis_number">Broj</th><th data-i18n="lis_piles">Hrpe</th><th data-i18n="lis_positions">Pozicije</th><th data-i18n="lis_predecessors">Prethodnici</th></tr>';
+                }
                 lisSteps.forEach((lisStep, index) => {
                     const isLastRow = index === lisSteps.length - 1;
                     const rowClass = isLastRow ? 'highlight' : '';
@@ -218,22 +274,43 @@
                     tableHtml += `<td>${lisStep.positions.join(', ')}</td>`;
                     tableHtml += '<td>';
                     for (const [key, value] of Object.entries(lisStep.predecessors)) {
-                        tableHtml += `Index ${key}: ${value.join(', ')}<br>`;
+                        if (lang == "en") {
+                            tableHtml += `Index ${key}: ${value.join(', ')}<br>`;
+                        } else if (lang == "hr") {
+                            tableHtml += `Indeks ${key}: ${value.join(', ')}<br>`;
+                        }
+                        
                     }
                     tableHtml += '</td>';
                     tableHtml += '</tr>';
                 });
+                
                 tableHtml += '</table>';
                 resultsDiv.innerHTML = tableHtml;
             } else if (step === 4) {
-                let tableHtml = '<h2>Minimizers for the LIS Found</h2>';
-                tableHtml += '<p>The LIS found: ' + lis.join(', ') + '</p>';
-                tableHtml += '<table><tr><th>Minimizer</th><th>Position in Sequence 1</th><th>Position in Sequence 2</th></tr>';
-                minimizersForLIS.forEach(minimizer => {
-                    tableHtml += `<tr><td>${minimizer[0]}</td><td>${minimizer[1]}</td><td>${minimizer[2]}</td></tr>`;
-                });
-                tableHtml += '</table>';
-                resultsDiv.innerHTML = tableHtml;
+
+                const lang = localStorage.getItem('preferredLanguage') || 'en';
+                console.log("language: 4" + lang);
+                if(lang == 'en') {
+                    let tableHtml = `<h2 data-i18n="lis_min_lis_found">Minimizers for the LIS Found</h2>`;
+                    tableHtml += `<p data-i18n="lis_lis_found">The LIS found: ${lis.join(', ')}</p>`;
+                    tableHtml += '<table><tr><th data-i18n="lis_minimizer">Minimizer</th><th data-i18n="lis_pos_seq1">Position in Sequence 1</th><th data-i18n="lis_pos_seq2">Position in Sequence 2</th></tr>';
+                    minimizersForLIS.forEach(minimizer => {
+                        tableHtml += `<tr><td>${minimizer[0]}</td><td>${minimizer[1]}</td><td>${minimizer[2]}</td></tr>`;
+                    });
+                    tableHtml += '</table>';
+                    resultsDiv.innerHTML = tableHtml;        
+                }
+                else if (lang == 'hr') {
+                    let tableHtml = `<h2 data-i18n="lis_min_lis_found">Minimizatori za pronađeni LIS</h2>`;
+                    tableHtml += `<p data-i18n="lis_lis_found">Pronađeni LIS: ${lis.join(', ')}</p>`;
+                    tableHtml += '<table><tr><th data-i18n="lis_minimizer">Minimizator</th><th data-i18n="lis_pos_seq1">Pozicija u nizu 1</th><th data-i18n="lis_pos_seq2">Pozicija u nizu 2</th></tr>';
+                    minimizersForLIS.forEach(minimizer => {
+                        tableHtml += `<tr><td>${minimizer[0]}</td><td>${minimizer[1]}</td><td>${minimizer[2]}</td></tr>`;
+                    });
+                    tableHtml += '</table>';
+                    resultsDiv.innerHTML = tableHtml;        
+                }                
             }
         }
     </script>

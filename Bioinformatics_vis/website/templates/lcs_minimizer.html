@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LCS Minimizer</title>
+    <title data-i18n="lcs_title">LCS Minimizer</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,16 +26,15 @@
         }
 
         input[type="text"],
-        input[type="number"],
-        button {
+        input[type="number"] {
             padding: 10px;
             font-size: 16px;
             border: 2px solid #007bff;
             border-radius: 4px;
             width: 300px;
             text-align: center;
-            height: 40px; /* Set a fixed height for the input fields and the button */
-            box-sizing: border-box; /* Ensures padding is included in the height */
+            height: 40px;
+            box-sizing: border-box;
         }
 
         input[type="number"] {
@@ -43,14 +42,15 @@
         }
 
         button {
+            padding: 10px 20px; /* Controls the padding around the text */
             background-color: #007bff;
             color: white;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
-        }
-
-        .submit-btn {
-            margin-top: 21px;
+            font-size: 16px;
+            width: auto; /* Allow width to adjust based on content */
+            margin: 5px;
         }
 
         button:hover {
@@ -133,65 +133,57 @@
     </style>
 </head>
 <body>
-    <h1>LCS Minimizer</h1>
+    <h1 data-i18n="lcs_heading">LCS Minimizer</h1>
     <div class="input-container">
         <div class="input-group">
-            <label for="seq1">Sequence 1:</label>
+            <label for="seq1" data-i18n="lcs_seq1_label">Sequence 1:</label>
             <input type="text" id="seq1" name="seq1" maxlength="15" required>
-            <div id="seq1-error" class="error-message"></div>
+            <div id="seq1-error" class="error-message" data-i18n="lcs_seq1_error" hidden></div>
         </div>
         <div class="input-group">
-            <label for="seq2">Sequence 2:</label>
+            <label for="seq2" data-i18n="lcs_seq2_label">Sequence 2:</label>
             <input type="text" id="seq2" name="seq2" maxlength="15" required>
-            <div id="seq2-error" class="error-message"></div>
+            <div id="seq2-error" class="error-message" data-i18n="lcs_seq2_error" hidden></div>
         </div>
         <div class="input-group">
-            <label for="k">k:</label>
+            <label for="k" data-i18n="lcs_k_label">k:</label>
             <input type="number" id="k" name="k" min="1" required>
         </div>
         <div class="input-group">
-            <label for="w">w:</label>
+            <label for="w" data-i18n="lcs_w_label">w:</label>
             <input type="number" id="w" name="w" min="1" required>
         </div>
-        <button id="submit" class="submit-btn">Submit</button>
-        <div class="toggle-container">
-            <input type="checkbox" id="toggleLimitText" name="toggleLimitText">
-            <span for="toggleLimitText" >Disable character limit</span>
-        </div>
+    </div>
+    <div class="toggle-container">
+        <button id="submit" data-i18n="lcs_submit_btn">Submit</button>
+        <input type="checkbox" id="toggleLimitText" name="toggleLimitText">
+        <span for="toggleLimitText" data-i18n="lcs_toggle_limit">Disable character limit</span>
     </div>
 
-    <h2>Results</h2>
+    <h2 data-i18n="lcs_results_heading">Results</h2>
     <div id="results" class="alignments-container">
         <table id="lcs_table" class="alignment-table">
         </table>
     </div>
-
     <script>
-        const validChars = new Set(['A', 'C', 'T', 'G']);
+        const alphabetPattern = /^[A-Za-z]*$/;
 
         document.getElementById('toggleLimitText').addEventListener('change', function() {
-            const textInput = document.getElementById('textInput');
+            const textInput = document.getElementById('seq1');
+            const secondTextInput = document.getElementById('seq2');
             if (this.checked) {
                 textInput.removeAttribute('maxlength');
+                secondTextInput.removeAttribute('maxlength');
             } else {
                 textInput.setAttribute('maxlength', '15');
+                secondTextInput.setAttribute('maxlength', '15');
+
                 if (textInput.value.length > 15) {
                     textInput.value = textInput.value.substring(0, 15);
                 }
-            }
 
-            const patternInput = document.getElementById('patternInput');
-            if (this.checked) {
-                patternInput.removeAttribute('maxlength');
-
-            } else {
-                patternInput.setAttribute('maxlength', '15');
-                if (patternInput.value.length > 15) {
-                    patternInput.value = patternInput.value.substring(0, 15);
-                    if (textInput.value.length > 0) {
-                        patternInput.setAttribute('maxlength', textInput.value.length-1);
-                        patternInput.value = patternInput.value.substring(0, textInput.value.length-1);   
-                    }
+                if (secondTextInput.value.length > 15) {
+                    secondTextInput.value = secondTextInput.value.substring(0, 15);
                 }
             }
         });
@@ -202,18 +194,15 @@
             const value = input.value.trim();
             let isValid = true;
 
-            for (let char of value) {
-                if (!validChars.has(char.toUpperCase())) {
-                    isValid = false;
-                    break;
-                }
+            if (!alphabetPattern.test(value)){
+                isValid = false;
             }
 
             if (!isValid) {
-                errorDiv.textContent = 'Only characters A, C, T, G are allowed.';
+                errorDiv.hidden = false;
                 return false;
             } else {
-                errorDiv.textContent = '';
+                errorDiv.hidden = true;
                 return true;
             }
         }

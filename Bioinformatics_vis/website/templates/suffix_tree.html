@@ -125,27 +125,46 @@
     </style>
 </head>
 <body>
-    <h1>Suffix Tree Visualization</h1>
+    <h1 data-i18n="suffix_tree_visualization">Suffix Tree Visualization</h1>
     <div class="input-container">
-        <input type="text" id="textInput" placeholder="Enter text..." maxlength="15">
-        <button id="buildBtn" onclick="setupSuffixTree()">Build Suffix Tree</button>
+        <input type="text" id="textInput" placeholder="Enter text..." maxlength="15" data-i18n="enter_text_placeholder">
+        <button id="buildBtn" onclick="setupSuffixTree()" data-i18n="build_suffix_tree">Build Suffix Tree</button>
+        <div class="toggle-container">
+            <input type="checkbox" id="toggleLimitText" name="toggleLimitText" data-i18n="disable_limit_checkbox">
+            <span for="toggleLimitText" data-i18n="disable_character_limit">Disable character limit</span>
+        </div>
     </div>
     <div>
-        <button id="prevBtn" onclick="prevStep()" disabled>Previous</button>
-        <button id="nextBtn" onclick="nextStep()" disabled>Next</button>
+        <button id="prevBtn" onclick="prevStep()" disabled data-i18n="previous_button">Previous</button>
+        <button id="nextBtn" onclick="nextStep()" disabled data-i18n="next_button">Next</button>
     </div>
     <div class="visualization-container">
         <div class="suffix-container">
-            <ul id="suffixList"></ul>
+            <ul id="suffixList" data-i18n="suffix_list"></ul>
         </div>
         <div class="tree-container">
-            <svg id="treeSvg"></svg>
-            <svg id="treeSvg2" visibility="hidden"></svg>
-            <button id="rotateBtn" class="rotate-btn" onclick="rotateTree()">Rotate</button>
+            <svg id="treeSvg" data-i18n="tree_svg"></svg>
+            <svg id="treeSvg2" visibility="hidden" data-i18n="tree_svg2"></svg>
+            <button id="rotateBtn" class="rotate-btn" onclick="rotateTree()" disabled style="visibility: hidden;" data-i18n="rotate_button">Rotate</button>
         </div>
     </div>
 
     <script>
+
+    document.getElementById('toggleLimitText').addEventListener('change', function() {
+            const textInput = document.getElementById('textInput');
+            if (this.checked) {
+                textInput.removeAttribute('maxlength');
+                secondTextInput.removeAttribute('maxlength');
+            } else {
+                textInput.setAttribute('maxlength', '15');
+                if (textInput.value.length > 15) {
+                    textInput.value = textInput.value.substring(0, 15);
+                }
+            }
+        });
+
+            
         let treeStates = [];
         let suffixStates = [];
         let currentStep = 0;

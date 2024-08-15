@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="minimizers_title">Minimizer Finder</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f9f9f9;
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 20px;
+        }
+
+        .input-group label {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            width: 300px;
+            text-align: center;
+        }
+
+        input[type="number"] {
+            width: 100px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .alignment-table-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+
+        .alignment-table {
+            border-collapse: collapse;
+            table-layout: fixed;
+            width: auto;
+            max-width: 90%;
+            margin: 0 auto;
+        }
+
+        .alignment-table th, .alignment-table td {
+            border: 1px solid #ddd;
+            padding: 0;
+            text-align: center;
+            font-size: 16px;
+            width: 60px;
+            height: 60px;
+            position: relative;
+            overflow: hidden;
+            word-wrap: break-word;
+        }
+
+        .alignment-table td {
+            vertical-align: middle;
+        }
+
+        .alignment-table th {
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .header-cell {
+            background-color: #b0c4de;
+            font-weight: bold;
+        }
+
+        .red-text {
+            color: red;
+            font-weight: bold;
+        }
+
+        .left-header-cell {
+            background-color: #b0c4de;
+            font-weight: bold;
+            width: 100px;
+            text-align: right;
+        }
+
+        .left-number-cell {
+            background-color: #e0e0e0;
+            text-align: right;
+            font-weight: bold;
+            width: 100px;
+            padding-right: 10px;
+        }
+
+        .minimizers-list {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .minimizer-item {
+            margin: 5px 10px;
+            font-size: 16px;
+            font-family: monospace;
+        }
+
+        .minimizer-sequence {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1 data-i18n="minimizers_heading">Minimizer Finder</h1>
+    <div class="input-container">
+        <div class="input-group">
+            <label for="seq" data-i18n="minimizers_seq_label">Sequence:</label>
+            <input type="text" id="seq" name="seq" maxlength="100" required>
+        </div>
+        <div class="input-group">
+            <label for="k" data-i18n="minimizers_k_label">k (k-mer length):</label>
+            <input type="number" id="k" name="k" min="1" required>
+        </div>
+        <div class="input-group">
+            <label for="w" data-i18n="minimizers_w_label">w (window size):</label>
+            <input type="number" id="w" name="w" min="1" required>
+        </div>
+    </div>
+    <div class="toggle-container">
+        <button id="submit" data-i18n="minimizers_submit">Submit</button>
+        <input type="checkbox" id="toggleLimitText" name="toggleLimitText">
+        <span for="toggleLimitText" data-i18n="minimizers_toggle_limit">Disable character limit</span>
+    </div>
+    <div class="alignment-table-container">
+        <h2 data-i18n="minimizers_results_heading">Results</h2>
+        
+        <!-- Minimizers List Section -->
+        <div id="minimizersList" class="minimizers-list"></div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        document.getElementById('toggleLimitText').addEventListener('change', function() {
+            const textInput = document.getElementById('seq');
+            if (this.checked) {
+                textInput.removeAttribute('maxlength');
+            } else {
+                textInput.setAttribute('maxlength', '15');
+                if (textInput.value.length > 15) {
+                    textInput.value = textInput.value.substring(0, 15);
+                }
+            }
+        });
+
+        document.getElementById('submit').addEventListener('click', function() {
+            const seq = document.getElementById('seq').value;
+            const k = parseInt(document.getElementById('k').value);  // Convert to integer
+            const w = document.getElementById('w').value;
+
+            fetch('/minimizers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ seq: seq, k: k, w: w }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const lang = localStorage.getItem('preferredLanguage') || 'en';
+                const minimizers = data.minimizers;
+                const rows = data.rows;
+
+                // Clear the results area before adding new results
+                const resultsDiv = document.getElementById('results');
+                const minimizersListDiv = document.getElementById('minimizersList');
+                resultsDiv.innerHTML = '';
+                minimizersListDiv.innerHTML = '';
+
+                // Display minimizers list
+                minimizers.forEach(minimizer => {
+                    const minimizerSequence = minimizer[0].join(',');  // Convert array to string
+                    const minimizerIndex = minimizer[1];  // Minimizer index
+                    const minimizerItem = document.createElement('div');
+                    minimizerItem.classList.add('minimizer-item');
+                    minimizerItem.innerHTML = `<span class="minimizer-sequence">${minimizerSequence}</span> (Start: ${minimizerIndex - 1} )`;
+                    minimizersListDiv.appendChild(minimizerItem);
+                });
+
+                // Create a table
+                var table = '<table class="alignment-table">';
+
+                // Add header row with an additional gray "Index" column
+                table += '<tr>';
+                if (lang == "en") {
+                    table += '<th class="left-header-cell" data-i18n="index_label">Index</th>'; // Index column label
+                }
+                else if (lang == "hr") {
+                    table += '<th class="left-header-cell" data-i18n="index_label">Indeks</th>'; // Index column label
+                }
+                
+                for (let i = 0; i < seq.length; i++) {
+                    table += '<th class="header-cell">' + i + '</th>';
+                }
+                table += '</tr>';
+
+                // Add second row with an additional gray "Sequence" column
+                table += '<tr>';
+                if (lang == "en") {
+                    table += '<td class="left-header-cell" data-i18n="sequence_label">Sequence</td>'; // Sequence column label
+                }
+                else if (lang == "hr") {
+                    table += '<td class="left-header-cell" data-i18n="sequence_label">Sekvenca</td>'; // Sequence column label
+                }
+                for (let i = 0; i < seq.length; i++) {
+                    table += '<td>' + seq[i] + '</td>';
+                }
+                table += '</tr>';
+
+                // Add the rows from the 'rows' array
+                const isOdd = seq.length % 2 !== 0;
+                rows.forEach((rowIndexes, index) => {
+                    if (isOdd && index === rows.length - 2) {
+                        return; // Skip this row for odd-length sequences
+                    }
+                    table += '<tr>';
+                    table += '<td class="left-number-cell">' + (index + 1) + '</td>';  // Numbering row
+
+                    for (let i = 0; i < seq.length; i++) {
+                        const minimizerStart = minimizers[index][1] - 1;  // Get minimizer start index
+                        const minimizerEnd = minimizerStart + k;  // Get minimizer end index
+
+                        if (i >= minimizerStart && i < minimizerEnd) {
+                            table += '<td class="red-text">' + seq[i] + '</td>';
+                        } else if (rowIndexes.includes(i)) {
+                            table += '<td>' + seq[i] + '</td>';
+                        } else {
+                            table += '<td></td>';  // Empty cell
+                        }
+                    }
+                    table += '</tr>';
+                });
+
+                table += '</table>';
+                resultsDiv.innerHTML = table;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+{% endblock %}

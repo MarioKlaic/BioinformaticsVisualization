@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Needleman-Wunsch Global Alignment</title>
+    <title data-i18n="ga_page_title">Needleman-Wunsch Global Alignment</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         body {
@@ -163,28 +163,28 @@
     </style>
 </head>
 <body>
-    <h1>Needleman-Wunsch Global Alignment</h1>
+    <h1 data-i18n="ga_heading">Needleman-Wunsch Global Alignment</h1>
     <div class="input-container">
         <div class="input-group">
-            <label for="match">Match</label>
+            <label for="match" data-i18n="ga_label_match">Match</label>
             <input type="number" id="match" name="match" value="1">
         </div>
         <div class="input-group">
-            <label for="mismatch">Mismatch</label>
+            <label for="mismatch" data-i18n="ga_label_mismatch">Mismatch</label>
             <input type="number" id="mismatch" name="mismatch" value="-1">
         </div>
         <div class="input-group">
-            <label for="gap">Gap</label>
+            <label for="gap" data-i18n="ga_label_gap">Gap</label>
             <input type="number" id="gap" name="gap" value="-1">
         </div>
     </div>
     <div class="input-container">
-        <input type="text" id="seq1" name="seq1" placeholder="Enter Sequence 1" maxlength="15">
-        <input type="text" id="seq2" name="seq2" placeholder="Enter Sequence 2" maxlength="15">
-        <button onclick="alignSequences()">Align Sequences</button>
+        <input type="text" id="seq1" name="seq1" placeholder="Enter Sequence 1" maxlength="15" data-i18n="ga_placeholder_seq1">
+        <input type="text" id="seq2" name="seq2" placeholder="Enter Sequence 2" maxlength="15" data-i18n="ga_placeholder_seq2">
+        <button onclick="alignSequences()" data-i18n="ga_button_align">Align Sequences</button>
         <div class="toggle-container">
             <input type="checkbox" id="toggleLimitText" name="toggleLimitText">
-            <span for="toggleLimitText" >Disable character limit</span>
+            <span for="toggleLimitText" data-i18n="ga_disable_char_limit">Disable character limit</span>
         </div>
     </div>
     <div id="alignments" class="alignments-container"></div>
@@ -279,8 +279,14 @@
                 var alignmentBox = document.createElement('div');
                 alignmentBox.className = 'alignment-box monospace';
                 alignmentBox.innerHTML = `
-                    <p class="label">Alignment 1: <span class="monospace">${alignment[0]}</span></p>
-                    <p class="label">Alignment 2: <span class="monospace">${alignment[1]}</span></p>
+                    <div class="alignment-content en" data-lang="en">
+                        <p data-i18n="ga_alignment1" class="label">Alignment 1: <span class="monospace">${alignment[0]}</span></p>
+                        <p data-i18n="ga_alignment2" class="label">Alignment 2: <span class="monospace">${alignment[1]}</span></p>
+                    </div>
+                    <div class="alignment-content hr" data-lang="hr" style="display: none;">
+                        <p data-i18n="ga_alignment1_hr" class="label">Poravnanje 1: <span class="monospace">${alignment[0]}</span></p>
+                        <p data-i18n="ga_alignment2_hr" class="label">Poravnanje 2: <span class="monospace">${alignment[1]}</span></p>
+                    </div>
                 `;
                 alignmentBox.onclick = function() {
                     document.querySelectorAll('.alignment-box').forEach(box => box.classList.remove('selected'));
@@ -289,6 +295,7 @@
                 };
                 alignmentsContainer.appendChild(alignmentBox);
             });
+            changeBoxesLanguage()
 
             // Display the first alignment by default
             if (allAlignments.length > 0) {
@@ -339,6 +346,23 @@
 
             highlightCells(optimalPath);
         }
+
+        document.addEventListener('languageChanged', function() {
+            changeBoxesLanguage();
+    });
+    function changeBoxesLanguage() {
+        const savedLanguage = localStorage.getItem('preferredLanguage') || 'en';
+            var enContents = document.querySelectorAll('.alignment-content.en');
+            var hrContents = document.querySelectorAll('.alignment-content.hr');
+            if (savedLanguage == 'en') {
+                enContents.forEach(content => content.style.display = 'block');
+                hrContents.forEach(content => content.style.display = 'none');   
+            }
+            else if (savedLanguage == 'hr') {
+                enContents.forEach(content => content.style.display = 'none');
+                hrContents.forEach(content => content.style.display = 'block');
+            }
+    }
     </script>
 </body>
 {% endblock %}
