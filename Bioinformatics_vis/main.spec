@@ -10,6 +10,7 @@ a = Analysis(
     datas=[
         ('website/templates', 'website/templates'),
         ('website/static', 'website/static'),
+	('website/static/localization', 'website/static/localization')
     ],
     hiddenimports=[],
     hookspath=[],

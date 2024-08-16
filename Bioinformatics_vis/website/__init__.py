@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, send_from_directory, abort
 import os
 import json
+import sys
 from .routes.fm_route import bp as fm_route
 from .routes.global_alignment_route import bp as global_alignment_route
 from .routes.suffix_tree_route import bp as suffix_tree_route
@@ -30,7 +31,11 @@ def create_app():
 
     @app.route('/<lang>.json')
     def language(lang):
-        file_path = os.path.join('website', 'static', 'localization', f'{lang}.json')
+        # Use resource_path to ensure compatibility with PyInstaller executables
+        base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
+        file_path =  os.path.join(base_path, os.path.join('website', 'static', 'localization', f'{lang}.json'))
+        print(file_path)  # For debugging purposes
+        
         if os.path.exists(file_path):
             with open(file_path, 'r', encoding='utf-8') as json_file:
                 data = json.load(json_file)
