@@ -25,6 +25,8 @@
     "ga_placeholder_seq2": "Unesite sekvencu 2",
     "ga_button_align": "Poravnajte sekvence",
     "ga_disable_char_limit": "Onemogućite ograničenje znakova",
+    "ga_option_global": "Globalno",
+    "ga_option_semi_global": "Polu-Globalno",
     "lcs_title": "LCS Minimizator",
     "lcs_heading": "LCS Minimizator",
     "lcs_seq1_label": "Sekvenca 1:",

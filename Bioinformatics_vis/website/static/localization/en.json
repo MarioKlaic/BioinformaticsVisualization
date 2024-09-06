@@ -25,6 +25,8 @@
     "ga_placeholder_seq2": "Enter Sequence 2",
     "ga_button_align": "Align Sequences",
     "ga_disable_char_limit": "Disable character limit",
+    "ga_option_global": "Global",
+    "ga_option_semi_global": "Semi-Global",
     "lcs_title": "LCS Minimizer",
     "lcs_heading": "LCS Minimizer",
     "lcs_seq1_label": "Sequence 1:",
