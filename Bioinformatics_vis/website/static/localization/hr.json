@@ -27,6 +27,7 @@
     "ga_disable_char_limit": "Onemogućite ograničenje znakova",
     "ga_option_global": "Globalno",
     "ga_option_semi_global": "Polu-Globalno",
+    "ga_label_option": "Izaberi opciju rada",
     "lcs_title": "LCS Minimizator",
     "lcs_heading": "LCS Minimizator",
     "lcs_seq1_label": "Sekvenca 1:",

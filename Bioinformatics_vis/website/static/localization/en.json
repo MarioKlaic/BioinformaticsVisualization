@@ -27,6 +27,7 @@
     "ga_disable_char_limit": "Disable character limit",
     "ga_option_global": "Global",
     "ga_option_semi_global": "Semi-Global",
+    "ga_label_option": "Choose an option",
     "lcs_title": "LCS Minimizer",
     "lcs_heading": "LCS Minimizer",
     "lcs_seq1_label": "Sequence 1:",
