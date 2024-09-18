@@ -72,6 +72,7 @@
     "sa_is_previous": "Previous",
     "sa_is_next": "Next",
     "sa_is_guide_text": "Guide",
+    "sa_is_hide_types": "Hide types",
     "suffix_tree_visualization": "Suffix Tree Visualization",
     "enter_text_placeholder": "Enter text...",
     "build_suffix_tree": "Build Suffix Tree",

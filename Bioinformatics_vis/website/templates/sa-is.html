@@ -79,6 +79,10 @@
             height: auto;
         }
 
+        #typemapContainer {
+            margin-top: 10px;
+        }
+
         #stepButtons {
             margin-top: 10px;
         }
@@ -126,11 +130,21 @@
 
     <div class="table-container" id="tableContainer">
         <table id="resultTable"></table>
+        <div>
+
+        </div>
+        <div id="typemapContainer" style="display: none;">
+            <table id="typemapTable"></table>
+        </div>
         
         <div id="stepButtons">
             <button id="previousBtn" data-i18n="sa_is_previous">Previous</button>
             <button id="nextBtn" data-i18n="sa_is_next">Next</button>
         </div>
+    </div>
+    <div class="toggle-container">
+        <input type="checkbox" id="toggleTypemapCheckbox" name="toggleTypemapCheckbox" style="display: none;">
+        <label for="toggleTypemapCheckbox" id="toggleTypemapLabel" data-i18n="sa_is_hide_types" style="display: none;">Hide Types</label>
     </div>
 
     <textarea id="guideText" readonly data-i18n="sa_is_guide_text"></textarea>
@@ -165,7 +179,9 @@
             'accurateLMSSort': 'Rekurzivno izlazimo iz najdubljeg SA_X pronađenog, povezujući ih s prethodnim SA_X-1 dok ne dođemo do izvornog SA.'
         }
         let stepsData = null;
+        let typemap = null;
         let currentStep = 0;
+        let isTypemapShown = false;
 
         document.getElementById('textInputForm').addEventListener('submit', function(event) {
             event.preventDefault();
@@ -189,6 +205,7 @@
             .then(response => response.json())
             .then(data => {
                 stepsData = data.steps_table;
+                typemap = data.typemap;
                 showResultTable(currentStep);
             })
             .catch(error => console.error('Error:', error));
@@ -292,7 +309,50 @@
             }
             
             guideText.value += '\n\n' + currentStateComesFrom;
+
+            if (!isTypemapShown) {
+                isTypemapShown = true;
+                document.getElementById('toggleTypemapCheckbox').style.display = 'inline';
+                document.getElementById('toggleTypemapLabel').style.display = 'inline';
+                showTypemap(); // Optionally show the typemap initially
+            }
         }
+
+        function showTypemap() {
+            const typemapTable = document.getElementById('typemapTable');
+            typemapTable.innerHTML = ''; // Clear previous content
+
+            // Create a row to show the typemap values
+            var row = document.createElement('tr');
+            for (var i = 0; i < typemap.length; i++) {
+                var cell = document.createElement('td');
+                cell.textContent = typemap[i];
+                row.appendChild(cell);
+            }
+            typemapTable.appendChild(row);
+
+            // Display the typemap container
+            document.getElementById('typemapContainer').style.display = 'flex';
+        }
+
+        function toggleTypemap() {
+            const typemapContainer = document.getElementById('typemapContainer');
+            if (typemapContainer.style.display === 'none') {
+                typemapContainer.style.display = 'flex'; // Show the typemap table
+            } else {
+                typemapContainer.style.display = 'none'; // Hide the typemap table
+            }
+        }
+
+        document.getElementById('toggleTypemapCheckbox').addEventListener('change', toggleTypemap);
+
+        // Reset the visibility when the page is loaded to ensure the toggle button and typemap table are hidden
+        window.addEventListener('load', function() {
+            isTypemapShown = false;
+            document.getElementById('toggleTypemapCheckbox').style.display = 'none';
+            document.getElementById('toggleTypemapLabel').style.display = 'none';
+            document.getElementById('typemapContainer').style.display = 'none';
+        });
 
         function nextStep() {
             if (stepsData && currentStep < Object.keys(stepsData).length - 1) {

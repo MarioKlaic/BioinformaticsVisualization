@@ -9,4 +9,4 @@ Dist.rar contains the distribution version and has been tested and ran on window
 locate yourself within that directory and run pyinstaller command "pyinstaller main.spec" to build your own distribution version with the specifications inside of the .spec file. You may need to change it
 to your os requirements. Visit https://pyinstaller.org/en/stable/usage.html# 
 
-The other way to use this tool is through your own IDE or powershell and run the main.py to start the server locally by running the command "python main.py". This requires you to have python 3.x installed. It will start a server on your local adress which can be seen in the terminal where the command was run. You can use this tool by accessing that adress on your web browser. Make sure to keep the project structure when exporting to your own machine.
+The other way to use this tool is through your own IDE or powershell and run the main.py to start the server locally.

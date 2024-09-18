@@ -37,6 +37,26 @@ class SAIS:
                 res[i] = self.S_TYPE
         
         return res
+    
+    def buildTypeMapString(self, data):
+        """
+        helper function returning a jsonify-able result
+        """
+        res = list("0" *(len(data)+1))
+        res[-1] = "S"
+        if not len(data):
+            return res
+        
+        res[-2] = "L"
+        for i in range(len(data)-2, -1, -1):
+            if data[i] > data[i+1]:
+                res[i] = "L"
+            elif data[i] == data[i+1] and res[i+1] == self.L_TYPE:
+                res[i] = "L"
+            else:
+                res[i] = "S"
+        
+        return res
 
     def isLMSChar(self, offset, typemap):
         """

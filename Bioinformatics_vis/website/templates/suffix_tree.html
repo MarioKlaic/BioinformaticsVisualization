@@ -281,6 +281,80 @@
                 .attr("text-anchor", d => d.children ? "end" : "start")
                 .text(d => d.data.label ? d.data.label.split("(")[0] : "");
 
+                        
+            function extractLinks(tree) {
+                let links = [];
+
+                function traverse(node, parentLabel) {
+                    if (node.link > 0) {
+                        let startNode = extractNodeNumber(node.label);
+                        let endNode = node.link;
+                        links.push({ start: startNode, end: endNode });
+                    }
+
+                    for (let childKey in node.children) {
+                        traverse(node.children[childKey], node.label);
+                    }
+                }
+
+                function extractNodeNumber(label) {
+                    let match = label.match(/\(Node:\s*(\d+)\)/);
+                    return match ? parseInt(match[1]) : null;
+                }
+
+                traverse(tree.data, null);
+                return links;
+            }
+
+            function getCoordinates(links) {
+                let coordinates = [];
+
+                links.forEach(link => {
+                    const startNode = nodes.find(d => d.data.label && d.data.label.includes(`Node: ${link.start}`));
+                    const endNode = nodes.find(d => d.data.label && d.data.label.includes(`Node: ${link.end}`));
+
+                    if (startNode && endNode) {
+                        coordinates.push([
+                            { x: startNode.y , y: startNode.x },
+                            { x: endNode.y , y: endNode.x  }
+                        ]);
+                    }
+                });
+
+                return coordinates;
+            }
+
+            let tree_links = extractLinks(root);
+            let coordinates = getCoordinates(tree_links);
+
+            console.log(tree_links);
+            console.log(coordinates);
+
+            svg.selectAll(".suffix-link")
+                .data(coordinates)
+                .enter().append("line")
+                .attr("class", "suffix-link")
+                .attr("x1", d => d[0].x)
+                .attr("y1", d => d[0].y)
+                .attr("x2", d => d[1].x)
+                .attr("y2", d => d[1].y)
+                .attr("stroke", "red")
+                .attr("stroke-width", 1.5)
+                .attr("stroke-dasharray", "4,2")
+                .attr("marker-end", "url(#arrow)");
+
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 5)
+                .attr("refY", 5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto-start-reverse")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "red");
+
             document.getElementById('prevBtn').disabled = currentStep === 0;
             document.getElementById('nextBtn').disabled = currentStep === maxSteps;
         }

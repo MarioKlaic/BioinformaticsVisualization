@@ -18,4 +18,8 @@ def sa_is():
         steps = sa_is.getSteps()
     else:
         print("nothing found error")
-    return jsonify(steps_table=steps)
+    typemap = sa_is.buildTypeMapString(text.encode('utf-8'))
+    return jsonify({
+            'steps_table': steps,
+            'typemap': typemap
+        })
