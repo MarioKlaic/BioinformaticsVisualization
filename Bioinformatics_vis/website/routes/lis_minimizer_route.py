@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify
-from lis_minimizer import find_minimizers, keep_unique_first_values, find_matching_minimizers, extract_position2_sequence, longest_increasing_subsequences, find_minimizers_by_position2
+from logic.lis_minimizer import find_minimizers, keep_unique_first_values, find_matching_minimizers, extract_position2_sequence, longest_increasing_subsequences, find_minimizers_by_position2
 
 bp = Blueprint('lis_minimizer_route', __name__)
 

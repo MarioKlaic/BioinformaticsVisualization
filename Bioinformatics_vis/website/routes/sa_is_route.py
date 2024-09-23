@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template
-from sa_is import SAIS
+from logic.sa_is import SAIS
 
 bp = Blueprint('sa_is_route', __name__)
 

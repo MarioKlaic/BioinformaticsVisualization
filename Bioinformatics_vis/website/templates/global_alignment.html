@@ -176,6 +176,26 @@
             text-align: center;
         }
 
+        .examples-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .examples button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+
+        .examples button:hover {
+            background-color: #218838;
+        }
+
     </style>
 </head>
 <body>
@@ -210,6 +230,16 @@
             <span for="toggleLimitText" data-i18n="ga_disable_char_limit">Disable character limit</span>
         </div>
     </div>
+
+    <div class="examples-container"></div>
+        <h3>Predefined Examples</h3>
+        <div class="examples">
+            <button onclick="setExample('AGCT', 'AAGT', 2, -1, -2)" data-i18n="ga_example_one">Example 1: AGCT vs AAGT</button>
+            <button onclick="setExample('GATTACA', 'GCATGCU', 1, -1, -1)" data-i18n="ga_example_two">Example 2: GATTACA vs GCATGCU</button>
+            <button onclick="setExample('ACGTACGT', 'TGCATGCA', 1, -2, -1)" data-i18n="ga_example_three" >Example 3: ACGTACGT vs TGCATGCA</button>
+        </div>
+    </div>
+
     <div id="alignments" class="alignments-container"></div>
     <div id="alignment" class="alignment-table-container"></div>
     <script>
@@ -404,6 +434,18 @@
                 hrContents.forEach(content => content.style.display = 'block');
             }
     }
+
+    function setExample(seq1, seq2, match, mismatch, gap) {
+            document.getElementById('seq1').value = seq1;
+            document.getElementById('seq2').value = seq2;
+            document.getElementById('match').value = match;
+            document.getElementById('mismatch').value = mismatch;
+            document.getElementById('gap').value = gap;
+
+            // Automatically run the alignment
+            alignSequences();
+        }
+
     </script>
 </body>
 {% endblock %}

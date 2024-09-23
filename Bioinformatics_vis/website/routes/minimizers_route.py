@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify
-from minimizers import find_minimizers, keep_unique_first_values
+from logic.minimizers import find_minimizers, keep_unique_first_values
 
 bp = Blueprint('minimizers_route', __name__)
 

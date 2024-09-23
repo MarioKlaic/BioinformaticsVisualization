@@ -1,6 +1,6 @@
 import pickle
 from flask import Blueprint, render_template, request, jsonify, session
-from suffix_tree import SuffixTree
+from logic.suffix_tree import SuffixTree
 
 bp = Blueprint('suffix_tree_route', __name__)
 

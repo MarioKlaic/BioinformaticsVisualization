@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify
-from global_alignment import GlobalAlignment
+from logic.global_alignment import GlobalAlignment
 
 bp = Blueprint('global_alignment_route', __name__)
 

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify
-from fm_index import FM_INDEX
+from logic.fm_index import FM_INDEX
 
 bp = Blueprint('fm_route', __name__)
 

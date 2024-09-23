@@ -16,8 +16,6 @@ class GlobalAlignment:
         for j in range(cols):
             score_matrix[0][j] = j * gap
 
-        print(score_matrix)
-
         # Fill the scoring matrix
         for i in range(1, rows):
             for j in range(1, cols):
@@ -39,10 +37,26 @@ class GlobalAlignment:
 
         # Helper function to perform the traceback recursively
         def traceback(i, j, align1, align2, path):
+            global sum_max
             if i == 0 and j == 0:
                 path = [(i,j)] + path
-                all_alignments.append((align1, align2))
-                all_paths.append(path)
+                sum = 0
+                for pair in path:
+                    sum += score_matrix[pair[0]][pair[1]]
+                if sum_max == None:
+                    sum_max = sum
+                    all_paths.append(path)
+                    all_alignments.append((align1, align2))
+
+                elif sum > sum_max:
+                    sum_max = sum
+                    all_paths.clear()
+                    all_alignments.clear()
+                    all_paths.append(path)
+                    all_alignments.append((align1, align2))
+                elif sum == sum_max:
+                    all_paths.append(path)
+                    all_alignments.append((align1, align2))
                 return
             if 'diag' in arrows[i][j]:
                 traceback(i - 1, j - 1, seq1[i - 1] + align1, seq2[j - 1] + align2, [(i, j)] + path)
@@ -58,6 +72,8 @@ class GlobalAlignment:
 
         all_alignments = []
         all_paths = []
+        global sum_max
+        sum_max = None
         traceback(rows - 1, cols - 1, '', '', [])
 
         return all_alignments, all_paths, score_matrix[rows - 1][cols - 1], score_matrix, arrows
@@ -120,8 +136,25 @@ class GlobalAlignment:
         # Helper function to perform the traceback recursively
         def traceback(i, j, align1, align2, path):
             if i == 0 or j == 0:
-                all_alignments.append((align1, align2))
-                all_paths.append(path)
+                global sum_max
+                path = [(i,j)] + path
+                sum = 0
+                for pair in path:
+                    sum += score_matrix[pair[0]][pair[1]]
+                if sum_max == None:
+                    sum_max = sum
+                    all_paths.append(path)
+                    all_alignments.append((align1, align2))
+                elif sum > sum_max:
+                    sum_max = sum
+                    all_paths.clear()
+                    all_alignments.clear()
+                    all_paths.append(path)
+                    all_alignments.append((align1, align2))
+                elif sum == sum_max:
+                    if (align1, align2) not in all_alignments:
+                        all_paths.append(path)
+                        all_alignments.append((align1, align2))
                 return
             if 'diag' in arrows[i][j]:
                 traceback(i - 1, j - 1, seq1[i - 1] + align1, seq2[j - 1] + align2, [(i, j)] + path)
@@ -132,6 +165,8 @@ class GlobalAlignment:
 
         all_alignments = []
         all_paths = []
+        global sum_max
+        sum_max = None
         for start_pos in start_pos_list:
             traceback(start_pos[0], start_pos[1], '', '', [])
 
